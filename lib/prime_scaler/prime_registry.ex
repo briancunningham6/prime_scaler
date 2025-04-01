@@ -42,6 +42,11 @@ defmodule PrimeScaler.PrimeRegistry do
     end
   end
 
+  def register_process(n) do
+    # Register the process in the registry and update node counts
+    GenServer.cast(__MODULE__, {:register_process, n})
+  end
+
   @impl true
   def init(_) do
     # Monitor node connections/disconnections
@@ -57,6 +62,27 @@ defmodule PrimeScaler.PrimeRegistry do
     broadcast_node_status()
     
     {:ok, state}
+  end
+
+  @impl true
+  def handle_cast({:register_process, n}, state) do
+    # Update processes by node tracking
+    current_node = node()
+    node_processes = Map.get(state.processes_by_node, current_node, [])
+    updated_processes = [n | node_processes]
+    updated_state = %{state | processes_by_node: Map.put(state.processes_by_node, current_node, updated_processes)}
+    
+    # Broadcast updated node status
+    broadcast_node_status()
+
+    # Broadcast that a new process was registered
+    Phoenix.PubSub.broadcast(
+      PrimeScaler.PubSub,
+      "primes",
+      {:process_registered, n}
+    )
+
+    {:noreply, updated_state}
   end
 
   @impl true
