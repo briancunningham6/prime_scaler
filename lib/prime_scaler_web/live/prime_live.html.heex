@@ -31,13 +31,22 @@
             </div>
           <% end %>
           
-          <.button type="submit" class="w-full">
-            <%= if @calculating do %>
-              Calculating...
-            <% else %>
-              Calculate
-            <% end %>
-          </.button>
+          <div class="flex gap-4">
+            <.button type="submit" name="method" value="elixir" class="flex-1">
+              <%= if @calculating do %>
+                Calculating...
+              <% else %>
+                Calculate with Elixir
+              <% end %>
+            </.button>
+            <.button type="submit" name="method" value="go" class="flex-1 bg-green-500 hover:bg-green-700">
+              <%= if @calculating do %>
+                Calculating...
+              <% else %>
+                Calculate with Go
+              <% end %>
+            </.button>
+          </div>
         </form>
         
         <%= if @prime_result do %>

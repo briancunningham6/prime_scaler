@@ -30,7 +30,7 @@ defmodule PrimeScalerWeb.PrimeLive do
   end
 
   @impl true
-  def handle_event("submit", %{"n" => n_str}, socket) do
+  def handle_event("submit", %{"n" => n_str, "method" => method}, socket) do
     # Parse and validate the input
     case Integer.parse(n_str) do
       {n, _} when n > 0 and n <= 10_000 ->
@@ -52,7 +52,13 @@ defmodule PrimeScalerWeb.PrimeLive do
         # Spawn a task to calculate the prime number so the UI remains responsive
         Task.start(fn ->
           start_time = System.monotonic_time(:millisecond)
-          result = PrimeServer.get_prime(n)
+          result = case method do
+            "go" ->
+              {result, 0} = System.cmd("./prime_go", [Integer.to_string(n)])
+              String.to_integer(result)
+            _ ->
+              PrimeServer.get_prime(n)
+          end
           end_time = System.monotonic_time(:millisecond)
           calculation_time = end_time - start_time
           
