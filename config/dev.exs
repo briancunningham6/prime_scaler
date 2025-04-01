@@ -11,8 +11,7 @@ config :prime_scaler, PrimeScalerWeb.Endpoint,
   debug_errors: true,
   secret_key_base: "N2sVdgkxZDIUBUzkB6eqeUsPrb1W79Uhu7wUDBT+GgY5c0dH6pUYpQR2kU5aInwc",
   watchers: [
-    esbuild: {Esbuild, :install_and_run, [:default, ~w(--sourcemap=inline --watch)]},
-    tailwind: {Tailwind, :install_and_run, [:default, ~w(--watch)]}
+    esbuild: {Esbuild, :install_and_run, [:default, ~w(--sourcemap=inline --watch)]}
   ]
 
 # Watch static and templates for browser reloading.

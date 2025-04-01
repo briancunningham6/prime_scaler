@@ -120,7 +120,7 @@ defmodule PrimeScalerWeb.PrimeLive do
   Converts a linear index to row and column.
   """
   def index_to_row_col(index) do
-    {rows, cols} = grid_dimensions()
+    {_rows, cols} = grid_dimensions()
     row = div(index - 1, cols)
     col = rem(index - 1, cols)
     {row, col}

@@ -17,8 +17,8 @@ defmodule PrimeScalerWeb.Router do
   scope "/", PrimeScalerWeb do
     pipe_through :browser
 
-    get "/", PageController, :home
-    live "/primes", PrimeLive
+    live "/", PrimeLive
+    # We're redirecting root to the prime calculator
   end
 
   # Enable LiveDashboard in development

@@ -15,29 +15,16 @@ defmodule PrimeScaler.PrimeCalculator do
       29
   """
   def calculate_prime(n) when is_integer(n) and n > 0 do
-    Stream.unfold({2, 0}, fn {current, count} ->
-      if is_prime(current) do
-        new_count = count + 1
-        if new_count == n do
-          nil
-        else
-          {current, {current + 1, new_count}}
-        end
-      else
-        {nil, {current + 1, count}}
-      end
-    end)
-    |> Enum.reduce_while(2, fn _, acc ->
-      if is_prime(acc) do
-        if count_primes_up_to(acc) == n do
-          {:halt, acc}
-        else
-          {:cont, acc + 1}
-        end
-      else
-        {:cont, acc + 1}
-      end
-    end)
+    find_nth_prime(n, 2, 1)
+  end
+
+  defp find_nth_prime(n, current, count) when count == n, do: current
+  defp find_nth_prime(n, current, count) do
+    if is_prime(current + 1) do
+      find_nth_prime(n, current + 1, count + 1)
+    else
+      find_nth_prime(n, current + 1, count)
+    end
   end
 
   @doc """
