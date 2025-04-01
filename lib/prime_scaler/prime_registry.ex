@@ -76,7 +76,7 @@ defmodule PrimeScaler.PrimeRegistry do
   def init(_) do
     # Create an ETS table to store prime numbers
     table = :ets.new(@table_name, [:set, :named_table, :public, read_concurrency: true])
-    
+
     # Initialize the state with an empty set of active processes
     {:ok, %{active_processes: MapSet.new(), table: table}}
   end
@@ -85,17 +85,17 @@ defmodule PrimeScaler.PrimeRegistry do
   def handle_cast({:register, n, pid}, state) do
     # Monitor the process so we know when it dies
     Process.monitor(pid)
-    
+
     # Add the process to our tracking
     updated_processes = MapSet.put(state.active_processes, n)
-    
+
     # Broadcast that a new process has been registered
     Phoenix.PubSub.broadcast(
       PrimeScaler.PubSub,
       "primes",
       {:process_registered, n}
     )
-    
+
     {:noreply, %{state | active_processes: updated_processes}}
   end
 
@@ -108,25 +108,25 @@ defmodule PrimeScaler.PrimeRegistry do
   def handle_call(:reset_system, _from, state) do
     # Get all processes from the registry
     processes = Registry.select(@registry_name, [{{:_, :"$1", :_}, [], [:"$1"]}])
-    
+
     # Terminate all active processes
     Enum.each(processes, fn pid ->
       Process.exit(pid, :shutdown)
     end)
-    
+
     # Clear the ETS table
     :ets.delete_all_objects(@table_name)
-    
+
     # Reset our tracking
     updated_state = %{state | active_processes: MapSet.new()}
-    
+
     # Broadcast that the system has been reset
     Phoenix.PubSub.broadcast(
       PrimeScaler.PubSub,
       "primes",
       :system_reset
     )
-    
+
     {:reply, :ok, updated_state}
   end
 
@@ -139,14 +139,28 @@ defmodule PrimeScaler.PrimeRegistry do
       |> Enum.reduce(MapSet.new(), fn n, acc ->
         MapSet.put(acc, n)
       end)
-    
+
     # Broadcast the updated active processes list
     Phoenix.PubSub.broadcast(
       PrimeScaler.PubSub,
       "primes",
       {:process_registered, nil}
     )
-    
+
     {:noreply, %{state | active_processes: active_processes}}
+  end
+
+  @impl true
+  def handle_info({:nodedown, node}, state) do
+    Logger.warning("Node #{node} has left the cluster")
+
+    # Broadcast that processes may have terminated
+    Phoenix.PubSub.broadcast(
+      PrimeScaler.PubSub,
+      "primes",
+      {:process_registered, nil}
+    )
+
+    {:noreply, state}
   end
 end
