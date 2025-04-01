@@ -55,7 +55,6 @@ defmodule PrimeScalerWeb.PrimeLive do
           # Set calculation method in the process dictionary
           Process.put(:calculation_method, if(method == "go", do: :go, else: :elixir))
           result = PrimeServer.get_prime(n)
-          end
           end_time = System.monotonic_time(:millisecond)
           calculation_time = end_time - start_time
           
