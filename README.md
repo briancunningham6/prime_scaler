@@ -112,10 +112,10 @@ PrimeScaler can be deployed as a release to multiple machines, allowing distribu
    ```bash
    # Set MIX_ENV to prod
    export MIX_ENV=prod
-   
+
    # Compile assets
    mix assets.deploy
-   
+
    # Generate a release
    mix release
    ```
@@ -143,6 +143,23 @@ PrimeScaler can be deployed as a release to multiple machines, allowing distribu
 
 ## Setting Up Distributed Nodes
 
+PrimeScaler implements automatic node discovery and connection, allowing new nodes to seamlessly join the computation cluster:
+
+1. When a new node starts, it automatically:
+   - Attempts to connect to any visible nodes in the cluster
+   - Sets up node monitoring to track cluster changes
+   - Becomes available for prime calculations
+
+2. The system handles node integration by:
+   - Using consistent hashing for even work distribution
+   - Automatically redistributing work when nodes join/leave
+   - Maintaining process state across the cluster
+
+3. Key benefits:
+   - Zero-configuration node addition
+   - Automatic workload rebalancing
+   - Seamless failover if nodes disconnect
+
 You can run PrimeScaler in a distributed configuration to spread the computation across multiple machines.
 
 ### macOS-Specific Distributed Setup
@@ -157,7 +174,7 @@ macOS has some specific requirements for distributed Erlang nodes to communicate
    ```bash
    # Check your current hostname
    scutil --get LocalHostName
-   
+
    # Set a hostname if needed
    sudo scutil --set LocalHostName your-hostname
    ```
@@ -175,11 +192,11 @@ macOS has some specific requirements for distributed Erlang nodes to communicate
    ```bash
    # For a development environment
    iex --name primary@192.168.1.10 -S mix phx.server
-   
+
    # For a production release
    /path/to/prime_scaler/bin/prime_scaler start --name primary@192.168.1.10
    ```
-   
+
    Replace `192.168.1.10` with the actual IP address of your machine.
 
 ### Secondary Nodes (computation only)
@@ -190,11 +207,11 @@ After deploying a release to a secondary macOS machine:
    ```bash
    # For a development environment
    iex --name secondary@192.168.1.11 --cookie prime_scaler -S mix
-   
+
    # For a production release
    /path/to/prime_scaler/bin/prime_scaler start --name secondary@192.168.1.11
    ```
-   
+
    Replace `192.168.1.11` with the actual IP address of your secondary machine.
 
 2. Inside the Elixir shell (iex) of the secondary node, connect to the primary node:
@@ -260,11 +277,11 @@ For optimal performance in a distributed setup, you can configure secondary macO
    mkdir -p /path/to/prime_scaler/config
    cat > /path/to/prime_scaler/config/compute_only.exs << 'EOF'
    import Config
-   
+
    # Disable the web interface
    config :prime_scaler, PrimeScalerWeb.Endpoint,
      server: false
-   
+
    # Enable distributed computation
    config :prime_scaler, :distribution,
      enabled: true,
@@ -305,16 +322,16 @@ If you only want to run the computational part on a secondary macOS machine that
      computation_only: true,
      node_selection_strategy: :remote_first
    )
-   
+
    # Only start the minimum required applications
    Application.ensure_all_started(:prime_scaler)
-   
+
    # Connect to the primary node (replace with your actual primary node name)
    Node.connect(:"primary@192.168.1.10")
-   
+
    IO.puts("Compute node started and connected to #{inspect Node.list()}")
    IO.puts("Press Ctrl+C twice to exit")
-   
+
    # Keep the script running
    :timer.sleep(:infinity)
    EOF
@@ -337,7 +354,7 @@ If you only want to run the computational part on a secondary macOS machine that
    ```elixir
    # Add this to your endpoint.ex or router.ex to enable LiveDashboard
    import Phoenix.LiveDashboard.Router
-   
+
    # In your router
    scope "/" do
      pipe_through :browser
