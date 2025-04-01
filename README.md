@@ -28,7 +28,7 @@ PrimeScaler is an educational Elixir application demonstrating process managemen
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/prime_scaler.git
+   git clone https://github.com/briancunningham6/prime_scaler.git
    cd prime_scaler
    ```
 
