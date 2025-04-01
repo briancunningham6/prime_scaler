@@ -84,7 +84,7 @@
       </p>
       
       <div class="overflow-auto max-h-96">
-        <div class="grid-container">
+        <div class="grid-container" id="tooltip-container" phx-hook="TooltipHandler">
           <%= for index <- 1..10_000 do %>
             <div 
               class={cell_class(index, @active_processes, @calculating_numbers)} 
@@ -93,9 +93,11 @@
             >
               <div class="grid-cell-tooltip">
                 <%= if Map.has_key?(@prime_values, index) do %>
-                  N: <%= index %> → Prime: <%= @prime_values[index] %>
+                  <strong>Number:</strong> <%= index %><br>
+                  <strong>Prime:</strong> <%= @prime_values[index] %>
                 <% else %>
-                  Number: <%= index %>
+                  <strong>Number:</strong> <%= index %><br>
+                  <em>Click to calculate</em>
                 <% end %>
               </div>
               &nbsp;

@@ -4,7 +4,19 @@ import {Socket} from "phoenix"
 import {LiveSocket} from "phoenix_live_view"
 
 // Define any hooks you want to use
-let Hooks = {}
+let Hooks = {
+  TooltipHandler: {
+    mounted() {
+      this.el.addEventListener('mousemove', e => {
+        const tooltip = this.el.querySelector('.grid-cell-tooltip');
+        if (tooltip) {
+          tooltip.style.left = `${e.clientX}px`;
+          tooltip.style.top = `${e.clientY - 10}px`;
+        }
+      });
+    }
+  }
+}
 
 // Get CSRF Token
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")

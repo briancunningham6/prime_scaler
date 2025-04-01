@@ -7025,7 +7025,19 @@ removing illegal node: "${(childNode.outerHTML || childNode.nodeValue).trim()}"
   };
 
   // js/app.js
-  var Hooks2 = {};
+  var Hooks2 = {
+    TooltipHandler: {
+      mounted() {
+        this.el.addEventListener("mousemove", (e) => {
+          const tooltip = this.el.querySelector(".grid-cell-tooltip");
+          if (tooltip) {
+            tooltip.style.left = `${e.clientX}px`;
+            tooltip.style.top = `${e.clientY - 10}px`;
+          }
+        });
+      }
+    }
+  };
   var csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content");
   var liveSocket = new LiveSocket("/live", Socket, {
     params: { _csrf_token: csrfToken },

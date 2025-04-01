@@ -56,26 +56,33 @@
 }
 
 .grid-cell-tooltip {
-  visibility: hidden;
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 4px 8px;
-  background-color: rgba(0, 0, 0, 0.8);
+  display: none;
+  position: fixed; /* Changed from absolute to fixed for better positioning */
+  transform: translate(-50%, -100%);
+  margin-top: -10px;
+  padding: 8px 12px;
+  background-color: rgba(0, 0, 0, 0.9);
   color: white;
-  border-radius: 4px;
-  font-size: 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  line-height: 1.4;
   white-space: nowrap;
-  z-index: 10;
+  z-index: 9999;
   pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.3s;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  width: 180px;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .grid-cell:hover .grid-cell-tooltip {
-  visibility: visible;
-  opacity: 1;
+  display: block;
+  animation: fadeIn 0.3s;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes pulse {
