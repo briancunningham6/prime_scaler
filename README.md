@@ -50,10 +50,31 @@ PrimeScaler is an educational Elixir application demonstrating process managemen
 
 The application creates a separate Elixir process for each requested prime number calculation. Once calculated, these numbers are cached in their respective processes for future access. The grid visualization shows which numbers have active processes.
 
+### Load Distribution
+
+The system distributes calculation load across multiple nodes using consistent hashing:
+
+1. When a new prime calculation is requested, the system:
+   - Checks if a process already exists for that number
+   - If not, uses consistent hashing to select a node based on the number
+   - Starts the calculation process on the selected node
+   - Returns the result to the requesting node
+
+2. The `PrimeRegistry` manages process distribution by:
+   - Using global registration to maintain process state across nodes
+   - Implementing consistent hashing for even distribution
+   - Handling node selection and process location
+
+3. Benefits:
+   - Even distribution of calculation load
+   - Automatic failover if a node becomes unavailable
+   - Process state preservation across the cluster
+   - Efficient resource utilization across all nodes
+
 Key components:
 - `PrimeCalculator`: Implements the prime number calculation algorithm
 - `PrimeServer`: GenServer that handles calculation and caching
-- `PrimeRegistry`: Manages the registry of calculation processes
+- `PrimeRegistry`: Manages the registry of calculation processes and node selection
 - `PrimeLive`: LiveView interface for user interaction
 
 ## Reset Functionality
