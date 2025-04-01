@@ -77,6 +77,35 @@ defmodule PrimeScalerWeb.PrimeLive do
       
     {:noreply, socket}
   end
+  
+  @impl true
+  def handle_event("select_number", %{"number" => number_str}, socket) do
+    # Parse the number from the grid cell
+    case Integer.parse(number_str) do
+      {n, _} when n > 0 and n <= 10_000 ->
+        # Clear any previous errors and start calculation
+        socket = assign(socket, error: nil, calculating: true, n: n, calculation_time: nil, prime_result: nil)
+        
+        # Get the LiveView PID
+        pid = self()
+        
+        # Spawn a task to calculate the prime number
+        Task.start(fn ->
+          start_time = System.monotonic_time(:millisecond)
+          result = PrimeServer.get_prime(n)
+          end_time = System.monotonic_time(:millisecond)
+          calculation_time = end_time - start_time
+          
+          # Send message to the LiveView process
+          send(pid, {:prime_calculated, n, result, calculation_time})
+        end)
+        
+        {:noreply, socket}
+        
+      _ ->
+        {:noreply, socket}
+    end
+  end
 
   @impl true
   def handle_info({:prime_calculated, n, result, calculation_time}, socket) do

@@ -1,11 +1,17 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/forms";
+@variant phx-click-loading ([".phx-click-loading&", ".phx-click-loading &"]);
+@variant phx-submit-loading ([".phx-submit-loading&", ".phx-submit-loading &"]);
+@variant phx-change-loading ([".phx-change-loading&", ".phx-change-loading &"]);
+
 /* Path: assets/css/app.css */
 /* Using Tailwind via CDN, no imports needed */
 
 /* Custom styles */
 .grid-container {
   display: grid;
-  grid-template-columns: repeat(20, 1fr);
-  grid-gap: 2px;
+  grid-template-columns: repeat(100, 1fr);
+  grid-gap: 1px;
 }
 
 .grid-cell {
@@ -13,8 +19,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.7rem;
-  border-radius: 2px;
+  font-size: 0.5rem;
+  border-radius: 1px;
+  min-width: 8px;
+  min-height: 8px;
+  overflow: hidden;
 }
 
 .grid-cell.active {

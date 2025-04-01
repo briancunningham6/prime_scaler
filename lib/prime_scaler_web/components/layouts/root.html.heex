@@ -7,25 +7,29 @@
     <title>PrimeScaler · Educational Elixir Application</title>
     
     <!-- Load TailwindCSS from CDN -->
-    <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.3.3/dist/tailwind.min.css" rel="stylesheet">
     
-    <!-- Load Phoenix from CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/phoenix@1.7.7/priv/static/phoenix.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/phoenix_live_view@0.19.0/priv/static/phoenix_live_view.min.js"></script>
+    <!-- Load Phoenix from CDN (latest versions) -->
+    <script src="https://cdn.jsdelivr.net/npm/phoenix@1.7.10/priv/static/phoenix.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/phoenix_live_view@0.19.5/priv/static/phoenix_live_view.min.js"></script>
     <script>
       // Initialize Phoenix global object if loaded from CDN
       window.Phoenix = window.Phoenix || {};
-      // Ensure LiveSocket is available
-      if (!window.Phoenix.LiveSocket && window.phoenix_live_view) {
+      
+      // Ensure LiveSocket is available by explicitly copying it from phoenix_live_view
+      if (window.phoenix_live_view && window.phoenix_live_view.LiveSocket) {
         window.Phoenix.LiveSocket = window.phoenix_live_view.LiveSocket;
+        console.log("Successfully assigned LiveSocket from phoenix_live_view to Phoenix.LiveSocket");
+      } else {
+        console.warn("phoenix_live_view.LiveSocket not found, LiveView might not work properly");
       }
     </script>
     
     <!-- Custom styles -->
-    <link phx-track-static rel="stylesheet" href={~p"/assets/app.css"} />
+    <link phx-track-static rel="stylesheet" href="/assets/css/app.css" />
     
     <!-- Application JS -->
-    <script defer phx-track-static type="text/javascript" src={~p"/assets/app.js"}></script>
+    <script defer phx-track-static type="text/javascript" src="/assets/js/app.js"></script>
   </head>
   <body class="h-full bg-gray-100">
     <%= @inner_content %>

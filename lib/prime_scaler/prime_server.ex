@@ -56,6 +56,7 @@ defmodule PrimeScaler.PrimeServer do
     PrimeRegistry.store_prime(n, prime)
     
     # Broadcast that a new prime has been calculated
+    # We're not including calculation time here since it's now measured in the LiveView
     Phoenix.PubSub.broadcast(
       PrimeScaler.PubSub,
       "primes",

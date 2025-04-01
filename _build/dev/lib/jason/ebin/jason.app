@@ -1,5 +1,8 @@
 {application,jason,
-             [{modules,['Elixir.Enumerable.Jason.OrderedObject',
+             [{optional_applications,[decimal]},
+              {applications,[kernel,stdlib,elixir,decimal]},
+              {description,"A blazing fast JSON parser and generator in pure Elixir.\n"},
+              {modules,['Elixir.Enumerable.Jason.OrderedObject',
                         'Elixir.Jason','Elixir.Jason.Codegen',
                         'Elixir.Jason.DecodeError','Elixir.Jason.Decoder',
                         'Elixir.Jason.Decoder.Unescape','Elixir.Jason.Encode',
@@ -19,8 +22,5 @@
                         'Elixir.Jason.Encoder.Time','Elixir.Jason.Formatter',
                         'Elixir.Jason.Fragment','Elixir.Jason.Helpers',
                         'Elixir.Jason.OrderedObject','Elixir.Jason.Sigil']},
-              {optional_applications,[decimal]},
-              {applications,[kernel,stdlib,elixir,decimal]},
-              {description,"A blazing fast JSON parser and generator in pure Elixir.\n"},
               {registered,[]},
               {vsn,"1.4.4"}]}.

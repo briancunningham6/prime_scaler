@@ -77,17 +77,37 @@
     <div class="bg-white shadow-md rounded p-6 mb-4 overflow-auto">
       <h2 class="text-xl font-bold mb-4">Process Visualization</h2>
       <p class="mb-4">
-        Each cell below represents an integer from 1 to 10,000. Blue cells indicate active Elixir processes
+        Each cell below represents an integer from 1 to 10,000. Green cells indicate active Elixir processes
         calculating or caching prime numbers.
       </p>
       
       <div class="overflow-auto max-h-96">
         <div class="grid-container">
           <%= for index <- 1..10_000 do %>
-            <div class={active_cell?(index, @active_processes) && "grid-cell active" || "grid-cell inactive"} title={"Number: #{index}"}>
-              <%= index %>
+            <div 
+              class={active_cell?(index, @active_processes) && "grid-cell active" || "grid-cell inactive"} 
+              title={"Number: #{index}"}
+              phx-click="select_number"
+              phx-value-number={index}
+            >
+              &nbsp;
             </div>
           <% end %>
+        </div>
+      </div>
+      
+      <!-- Grid Legend and Information -->
+      <div class="mt-4 flex flex-wrap gap-4">
+        <div class="flex items-center">
+          <div class="w-4 h-4 bg-green-500 rounded mr-2"></div>
+          <span>Active Process</span>
+        </div>
+        <div class="flex items-center">
+          <div class="w-4 h-4 bg-slate-100 rounded mr-2"></div>
+          <span>Inactive</span>
+        </div>
+        <div>
+          <span class="font-semibold">Tip:</span> Click on a cell to calculate that specific number
         </div>
       </div>
     </div>
