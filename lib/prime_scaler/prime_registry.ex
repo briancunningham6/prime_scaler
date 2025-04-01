@@ -77,6 +77,9 @@ defmodule PrimeScaler.PrimeRegistry do
     # Create an ETS table to store prime numbers
     table = :ets.new(@table_name, [:set, :named_table, :public, read_concurrency: true])
 
+    # Monitor node connections/disconnections
+    :net_kernel.monitor_nodes(true)
+
     # Initialize the state with an empty set of active processes and node tracking
     {:ok, %{active_processes: MapSet.new(), table: table, processes_by_node: %{}}}
   end
@@ -173,8 +176,25 @@ defmodule PrimeScaler.PrimeRegistry do
   @impl true
   def handle_info({:nodedown, node}, state) do
     Logger.warning("Node #{node} has left the cluster")
+    
+    # Update processes by node count
+    processes_by_node = Map.delete(state.processes_by_node, node)
 
     # Broadcast that processes may have terminated
+    Phoenix.PubSub.broadcast(
+      PrimeScaler.PubSub,
+      "primes",
+      {:process_registered, nil}
+    )
+
+    {:noreply, %{state | processes_by_node: processes_by_node}}
+  end
+
+  @impl true
+  def handle_info({:nodeup, node}, state) do
+    Logger.info("Node #{node} has joined the cluster")
+    
+    # Broadcast node connection
     Phoenix.PubSub.broadcast(
       PrimeScaler.PubSub,
       "primes",
