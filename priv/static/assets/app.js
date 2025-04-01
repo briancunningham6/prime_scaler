@@ -7044,6 +7044,14 @@ removing illegal node: "${(childNode.outerHTML || childNode.nodeValue).trim()}"
       }
     }
   };
+  document.addEventListener("contextmenu", (e) => {
+    const cell = e.target.closest("[data-context-menu]");
+    if (cell && cell.classList.contains("active")) {
+      e.preventDefault();
+      const number = cell.getAttribute("phx-value-number");
+      liveSocket.getSocket().channels[0].push("kill_process", { number });
+    }
+  });
   var csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content");
   var liveSocket = new LiveSocket("/live", Socket, {
     params: { _csrf_token: csrfToken },
