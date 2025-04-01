@@ -32,12 +32,16 @@ defmodule PrimeScalerWeb.PrimeLive do
     case Integer.parse(n_str) do
       {n, _} when n > 0 and n <= 10_000 ->
         # Clear any previous errors
-        socket = assign(socket, error: nil, calculating: true)
+        socket = assign(socket, error: nil, calculating: true, n: n)
+        
+        # Get the LiveView PID
+        pid = self()
         
         # Spawn a task to calculate the prime number so the UI remains responsive
         Task.start(fn ->
           result = PrimeServer.get_prime(n)
-          send(self(), {:prime_calculated, n, result})
+          # Send message to the LiveView process specifically
+          send(pid, {:prime_calculated, n, result})
         end)
         
         {:noreply, socket}

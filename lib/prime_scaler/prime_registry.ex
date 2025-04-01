@@ -106,9 +106,11 @@ defmodule PrimeScaler.PrimeRegistry do
 
   @impl true
   def handle_call(:reset_system, _from, state) do
+    # Get all processes from the registry
+    processes = Registry.select(@registry_name, [{{:_, :"$1", :_}, [], [:"$1"]}])
+    
     # Terminate all active processes
-    Registry.select(@registry_name, [{{:_, :"$1", :_}, [], [:"$1"]}])
-    |> Enum.each(fn pid ->
+    Enum.each(processes, fn pid ->
       Process.exit(pid, :shutdown)
     end)
     
@@ -133,10 +135,17 @@ defmodule PrimeScaler.PrimeRegistry do
     # When a process dies, we need to update our tracking
     # We'll do this by rebuilding the set of active processes from the registry
     active_processes =
-      Registry.select(@registry_name, [{{:_, :"$1", :_}, [], [:"$1"]}])
+      Registry.select(@registry_name, [{{:"$1", :_, :_}, [], [:"$1"]}])
       |> Enum.reduce(MapSet.new(), fn n, acc ->
         MapSet.put(acc, n)
       end)
+    
+    # Broadcast the updated active processes list
+    Phoenix.PubSub.broadcast(
+      PrimeScaler.PubSub,
+      "primes",
+      {:process_registered, nil}
+    )
     
     {:noreply, %{state | active_processes: active_processes}}
   end
