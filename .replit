@@ -52,5 +52,9 @@ waitForPort = 5000
 run = ["sh", "-c", "mix deps.get && mix phx.server"]
 
 [[ports]]
+localPort = 3000
+externalPort = 3000
+
+[[ports]]
 localPort = 5000
 externalPort = 80

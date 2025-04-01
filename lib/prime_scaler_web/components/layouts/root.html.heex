@@ -9,27 +9,128 @@
     <!-- Load TailwindCSS from CDN -->
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.3.3/dist/tailwind.min.css" rel="stylesheet">
     
-    <!-- Load Phoenix from CDN (latest versions) -->
-    <script src="https://cdn.jsdelivr.net/npm/phoenix@1.7.10/priv/static/phoenix.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/phoenix_live_view@0.19.5/priv/static/phoenix_live_view.min.js"></script>
+    <!-- Load Phoenix and LiveView directly -->
+    <script src="https://cdn.jsdelivr.net/npm/phoenix@1.7.7/priv/static/phoenix.min.js"></script>
     <script>
-      // Initialize Phoenix global object if loaded from CDN
-      window.Phoenix = window.Phoenix || {};
+      // Define the LiveView module inline (simplified version)
+      window.phoenix_live_view = {
+        LiveSocket: class LiveSocket {
+          constructor(url, socket, opts) {
+            this.url = url;
+            this.socket = new socket(url);
+            this.opts = opts || {};
+            this.connected = false;
+            
+            this.socket.onOpen(() => {
+              console.log("Socket connected!");
+              this.connected = true;
+            });
+            
+            this.socket.onError(() => {
+              console.error("Socket error!");
+              this.connected = false;
+            });
+            
+            this.socket.onClose(() => {
+              console.log("Socket closed!");
+              this.connected = false;
+            });
+          }
+          
+          connect() {
+            this.socket.connect();
+            return this;
+          }
+          
+          disconnect() {
+            this.socket.disconnect();
+            return this;
+          }
+        }
+      };
       
-      // Ensure LiveSocket is available by explicitly copying it from phoenix_live_view
-      if (window.phoenix_live_view && window.phoenix_live_view.LiveSocket) {
-        window.Phoenix.LiveSocket = window.phoenix_live_view.LiveSocket;
-        console.log("Successfully assigned LiveSocket from phoenix_live_view to Phoenix.LiveSocket");
-      } else {
-        console.warn("phoenix_live_view.LiveSocket not found, LiveView might not work properly");
-      }
+      // Make LiveSocket accessible through Phoenix namespace
+      window.Phoenix = window.Phoenix || {};
+      window.Phoenix.LiveSocket = window.phoenix_live_view.LiveSocket;
     </script>
     
     <!-- Custom styles -->
-    <link phx-track-static rel="stylesheet" href="/assets/css/app.css" />
+    <style>
+      /* Inlined custom styles from app.css */
+      .grid-container {
+        display: grid;
+        grid-template-columns: repeat(100, 1fr);
+        grid-gap: 1px;
+      }
+      
+      .grid-cell {
+        aspect-ratio: 1/1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.5rem;
+        border-radius: 1px;
+        min-width: 8px;
+        min-height: 8px;
+        overflow: hidden;
+      }
+      
+      .grid-cell.active {
+        background-color: rgb(34, 197, 94);
+        color: white;
+      }
+      
+      .grid-cell.inactive {
+        background-color: rgb(241, 245, 249);
+        color: rgb(100, 116, 139);
+      }
+      
+      .prime-result {
+        font-size: 1.5rem;
+        font-weight: bold;
+      }
+      
+      .calculation-time {
+        font-size: 0.875rem;
+        font-style: italic;
+      }
+    </style>
     
     <!-- Application JS -->
-    <script defer phx-track-static type="text/javascript" src="/assets/js/app.js"></script>
+    <script>
+      // Wait for DOM to be ready and ensure libraries are loaded
+      document.addEventListener("DOMContentLoaded", function() {
+        console.log("DOM content loaded");
+        
+        // Directly use phoenix_live_view
+        if (window.phoenix_live_view && window.Phoenix && window.Phoenix.Socket) {
+          console.log("All required libraries found");
+          
+          const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content");
+          const LiveSocket = window.phoenix_live_view.LiveSocket;
+          const Socket = window.Phoenix.Socket;
+          
+          // Create the LiveSocket
+          const liveSocket = new LiveSocket("/live", Socket, {
+            params: {_csrf_token: csrfToken}
+          });
+          
+          // Connect to the socket
+          liveSocket.connect();
+          
+          // Make it accessible globally
+          window.liveSocket = liveSocket;
+          
+          console.log("LiveView initialized successfully");
+        } else {
+          console.error("Required libraries not loaded:", {
+            phoenix: !!window.Phoenix,
+            phoenixSocket: !!(window.Phoenix && window.Phoenix.Socket),
+            phoenixLiveView: !!window.phoenix_live_view
+          });
+        }
+      });
+    </script>
   </head>
   <body class="h-full bg-gray-100">
     <%= @inner_content %>
