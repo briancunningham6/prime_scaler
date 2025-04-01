@@ -52,8 +52,15 @@ defmodule PrimeScaler.PrimeServer do
     Logger.info("Calculating #{n}th prime number")
     prime = case Process.get(:calculation_method, :elixir) do
       :go -> 
-        {result, 0} = System.cmd(Path.join(File.cwd!(), "prime_go"), [Integer.to_string(n)])
-        String.to_integer(result)
+        try do
+          {result, 0} = System.cmd(Path.join(File.cwd!(), "prime_go"), [Integer.to_string(n)])
+          String.to_integer(result)
+        rescue
+          _ ->
+            # Log the failure and fallback to Elixir implementation
+            Logger.warn("Go calculation failed for n=#{n}, falling back to Elixir implementation")
+            PrimeCalculator.calculate_prime(n)
+        end
       _ -> 
         PrimeCalculator.calculate_prime(n)
     end
