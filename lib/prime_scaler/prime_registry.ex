@@ -35,6 +35,7 @@ defmodule PrimeScaler.PrimeRegistry do
         _ -> node()
       end
     end)
+    |> Map.new(fn {node, pids} -> {node, length(pids)} end)
   end
 
   def get_connected_nodes do
