@@ -1,0 +1,56 @@
+modules = ["elixir"]
+
+[nix]
+channel = "stable-24_05"
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Compile"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "PrimeScaler"
+
+[[workflows.workflow]]
+name = "Compile"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd . && mix deps.get && mix compile"
+
+[[workflows.workflow]]
+name = "PrimeScaler"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd . && mix phx.server"
+waitForPort = 5000
+
+[deployment]
+run = ["sh", "-c", "mix deps.get && mix phx.server"]
+
+[[ports]]
+localPort = 5000
+externalPort = 80
