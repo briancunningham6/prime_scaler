@@ -14,7 +14,7 @@ defmodule PrimeScalerWeb.PrimeLive do
     end
 
     processes_by_node = PrimeScaler.PrimeRegistry.get_processes_by_node()
-    connected_nodes = PrimeScaler.PrimeRegistry.get_connected_nodes()
+    connected_nodes = [node() | PrimeScaler.PrimeRegistry.get_connected_nodes()]
 
     {:ok,
      assign(socket,

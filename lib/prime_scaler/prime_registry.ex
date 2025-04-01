@@ -51,7 +51,12 @@ defmodule PrimeScaler.PrimeRegistry do
     table = :ets.new(@table_name, [:set, :named_table, :public, read_concurrency: true])
 
     # Initialize the state with an empty set of active processes and node tracking
-    {:ok, %{active_processes: MapSet.new(), table: table, processes_by_node: %{}}}
+    state = %{active_processes: MapSet.new(), table: table, processes_by_node: %{}}
+    
+    # Broadcast initial node status including self
+    broadcast_node_status()
+    
+    {:ok, state}
   end
 
   @impl true
@@ -60,6 +65,9 @@ defmodule PrimeScaler.PrimeRegistry do
     
     # Update processes by node count
     processes_by_node = Map.delete(state.processes_by_node, node)
+    
+    # Broadcast updated node status
+    broadcast_node_status()
 
     # Broadcast that processes may have terminated
     Phoenix.PubSub.broadcast(
@@ -75,7 +83,10 @@ defmodule PrimeScaler.PrimeRegistry do
   def handle_info({:nodeup, node}, state) do
     Logger.info("Node #{node} has joined the cluster")
     
-    # Broadcast node connection
+    # Broadcast updated node status
+    broadcast_node_status()
+
+    # Broadcast process update
     Phoenix.PubSub.broadcast(
       PrimeScaler.PubSub,
       "primes",
@@ -83,5 +94,14 @@ defmodule PrimeScaler.PrimeRegistry do
     )
 
     {:noreply, state}
+  end
+
+  defp broadcast_node_status do
+    nodes = [node() | Node.list()]
+    Phoenix.PubSub.broadcast(
+      PrimeScaler.PubSub,
+      "primes",
+      {:node_status_changed, nodes}
+    )
   end
 end
