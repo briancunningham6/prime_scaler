@@ -1,0 +1,23 @@
+<main class="flex flex-col h-screen">
+  <header class="bg-blue-600 text-white">
+    <div class="mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <div class="flex-shrink-0 font-bold text-xl">
+          PrimeScaler
+        </div>
+        <div class="ml-4 flex items-center">
+          <a href="https://github.com/elixir-lang/elixir" class="text-white hover:text-blue-200">
+            Elixir
+          </a>
+          <span class="mx-2">|</span>
+          <a href="https://www.phoenixframework.org/" class="text-white hover:text-blue-200">
+            Phoenix
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
+  <div class="flex-grow overflow-auto">
+    <%= @inner_content %>
+  </div>
+</main>

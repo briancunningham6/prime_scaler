@@ -1,0 +1,24 @@
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+
+/* Custom styles for the grid visualization */
+.grid-container {
+  padding: 10px;
+  background-color: #f9fafb;
+  border-radius: 0.25rem;
+}
+
+/* For tooltip on hover over cells */
+[title]:hover:after {
+  content: attr(title);
+  padding: 4px 8px;
+  color: #fff;
+  background-color: rgba(0, 0, 0, 0.8);
+  border-radius: 4px;
+  position: absolute;
+  z-index: 100;
+  white-space: nowrap;
+  font-size: 12px;
+  pointer-events: none;
+}
