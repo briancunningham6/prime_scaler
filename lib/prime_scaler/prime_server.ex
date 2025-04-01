@@ -50,7 +50,13 @@ defmodule PrimeScaler.PrimeServer do
   def handle_call(:get_prime, _from, %{n: n, prime: nil} = state) do
     # Calculate the prime number when first requested
     Logger.info("Calculating #{n}th prime number")
-    prime = PrimeCalculator.calculate_prime(n)
+    prime = case Process.get(:calculation_method, :elixir) do
+      :go -> 
+        {result, 0} = System.cmd(Path.join(File.cwd!(), "prime_go"), [Integer.to_string(n)])
+        String.to_integer(result)
+      _ -> 
+        PrimeCalculator.calculate_prime(n)
+    end
     
     # Store the result in ETS for quick restart recovery
     PrimeRegistry.store_prime(n, prime)

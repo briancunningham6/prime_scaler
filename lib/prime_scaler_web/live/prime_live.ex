@@ -52,12 +52,9 @@ defmodule PrimeScalerWeb.PrimeLive do
         # Spawn a task to calculate the prime number so the UI remains responsive
         Task.start(fn ->
           start_time = System.monotonic_time(:millisecond)
-          result = case method do
-            "go" ->
-              {result, 0} = System.cmd(Path.join(File.cwd!(), "prime_go"), [Integer.to_string(n)])
-              String.to_integer(result)
-            _ ->
-              PrimeServer.get_prime(n)
+          # Set calculation method in the process dictionary
+          Process.put(:calculation_method, if(method == "go", do: :go, else: :elixir))
+          result = PrimeServer.get_prime(n)
           end
           end_time = System.monotonic_time(:millisecond)
           calculation_time = end_time - start_time
