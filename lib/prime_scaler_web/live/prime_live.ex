@@ -54,7 +54,7 @@ defmodule PrimeScalerWeb.PrimeLive do
           start_time = System.monotonic_time(:millisecond)
           result = case method do
             "go" ->
-              {result, 0} = System.cmd("./prime_go", [Integer.to_string(n)])
+              {result, 0} = System.cmd(Path.join(File.cwd!(), "prime_go"), [Integer.to_string(n)])
               String.to_integer(result)
             _ ->
               PrimeServer.get_prime(n)
