@@ -9,25 +9,18 @@ defmodule PrimeScalerWeb.PrimeLive do
 
   @impl true
   def mount(_params, _session, socket) do
-    # Subscribe to the primes topic to receive updates
-    Phoenix.PubSub.subscribe(PrimeScaler.PubSub, "primes")
+    if connected?(socket) do
+      Phoenix.PubSub.subscribe(PrimeScaler.PubSub, "primes")
+    end
 
-    # Initial socket state
-    socket =
-      socket
-      |> assign(
-        n: nil,
-        prime_result: nil, 
-        active_processes: PrimeScaler.get_active_processes(),
-        processes_by_node: PrimeScaler.PrimeRegistry.get_processes_by_node(),
-        calculating: false,
-        calculating_numbers: MapSet.new(),
-        prime_values: %{}, # Map of number => prime value for tooltips
-        error: nil,
-        calculation_time: nil
-      )
+    processes_by_node = PrimeScaler.PrimeRegistry.get_processes_by_node()
+    connected_nodes = PrimeScaler.PrimeRegistry.get_connected_nodes()
 
-    {:ok, socket}
+    {:ok,
+     assign(socket,
+       processes_by_node: processes_by_node,
+       connected_nodes: connected_nodes
+     )}
   end
 
   @impl true
@@ -46,10 +39,10 @@ defmodule PrimeScalerWeb.PrimeLive do
             prime_result: nil,
             calculating_numbers: MapSet.put(socket.assigns.calculating_numbers, n)
           )
-        
+
         # Get the LiveView PID
         pid = self()
-        
+
         # Spawn a task to calculate the prime number so the UI remains responsive
         Task.start(fn ->
           start_time = System.monotonic_time(:millisecond)
@@ -58,16 +51,16 @@ defmodule PrimeScalerWeb.PrimeLive do
           result = PrimeServer.get_prime(n)
           end_time = System.monotonic_time(:millisecond)
           calculation_time = end_time - start_time
-          
+
           # Send message to the LiveView process specifically
           send(pid, {:prime_calculated, n, result, calculation_time})
         end)
-        
+
         {:noreply, socket}
-        
+
       {n, _} ->
         {:noreply, assign(socket, error: "Please enter a number between 1 and 10,000", n: n)}
-        
+
       :error ->
         {:noreply, assign(socket, error: "Please enter a valid number", n: nil)}
     end
@@ -77,7 +70,7 @@ defmodule PrimeScalerWeb.PrimeLive do
   def handle_event("reset", _, socket) do
     # Reset the system
     PrimeScaler.reset_system()
-    
+
     # Clear the form and results
     socket =
       socket
@@ -88,10 +81,10 @@ defmodule PrimeScalerWeb.PrimeLive do
         error: nil,
         calculation_time: nil
       )
-      
+
     {:noreply, socket}
   end
-  
+
   @impl true
   def handle_event("kill_process", %{"number" => number_str}, socket) do
     case Integer.parse(number_str) do
@@ -127,23 +120,23 @@ defmodule PrimeScalerWeb.PrimeLive do
             id: cell_id, 
             class: cell_class(n, socket.assigns.active_processes, MapSet.put(socket.assigns.calculating_numbers, n))
           })
-        
+
         # Get the LiveView PID
         pid = self()
-        
+
         # Spawn a task to calculate the prime number
         Task.start(fn ->
           start_time = System.monotonic_time(:millisecond)
           result = PrimeServer.get_prime(n)
           end_time = System.monotonic_time(:millisecond)
           calculation_time = end_time - start_time
-          
+
           # Send message to the LiveView process
           send(pid, {:prime_calculated, n, result, calculation_time})
         end)
-        
+
         {:noreply, socket}
-        
+
       _ ->
         {:noreply, socket}
     end
@@ -163,10 +156,10 @@ defmodule PrimeScalerWeb.PrimeLive do
         # Store the calculated prime value for tooltips
         prime_values: Map.put(socket.assigns.prime_values, n, result)
       )
-      
+
     {:noreply, socket}
   end
-  
+
   # For backward compatibility with any existing processes
   @impl true
   def handle_info({:prime_calculated, n, result}, socket) do
@@ -180,7 +173,7 @@ defmodule PrimeScalerWeb.PrimeLive do
         # Store the calculated prime value for tooltips
         prime_values: Map.put(socket.assigns.prime_values, n, result)
       )
-      
+
     {:noreply, socket}
   end
 
@@ -208,12 +201,16 @@ defmodule PrimeScalerWeb.PrimeLive do
         error: nil,
         calculation_time: nil
       )
-      
+
     {:noreply, socket}
   end
 
+  def handle_info({:node_status_changed, connected_nodes}, socket) do
+    {:noreply, assign(socket, connected_nodes: connected_nodes)}
+  end
+
   # Grid helper functions
-  
+
   @doc """
   Calculates the number of rows and columns for the grid.
   """
@@ -223,7 +220,7 @@ defmodule PrimeScalerWeb.PrimeLive do
     cols = 100
     {rows, cols}
   end
-  
+
   @doc """
   Converts a linear index to row and column.
   """
@@ -233,14 +230,14 @@ defmodule PrimeScalerWeb.PrimeLive do
     col = rem(index - 1, cols)
     {row, col}
   end
-  
+
   @doc """
   Determines if a cell should be active based on the current active processes.
   """
   def active_cell?(index, active_processes) do
     index in active_processes
   end
-  
+
   @doc """
   Returns the appropriate class for a grid cell based on its state.
   """
@@ -254,7 +251,7 @@ defmodule PrimeScalerWeb.PrimeLive do
       true -> "grid-cell inactive"
     end
   end
-  
+
   @doc """
   Formats the calculation time result.
   """
