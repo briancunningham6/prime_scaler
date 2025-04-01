@@ -3,9 +3,8 @@ import Config
 # For development, we disable any cache and enable
 # debugging and code reloading.
 config :prime_scaler, PrimeScalerWeb.Endpoint,
-  # Binding to loopback ipv4 address prevents access from other machines.
-  # Change to `ip: {0, 0, 0, 0}` to allow access from other machines.
-  http: [ip: {0, 0, 0, 0}, port: 5000],
+  # Use System.get_env to check if we're on Replit
+  http: [ip: {0, 0, 0, 0}, port: if(System.get_env("REPL_ID"), do: 5000, else: 3000)],
   server: true,
   check_origin: false,
   code_reloader: true,
