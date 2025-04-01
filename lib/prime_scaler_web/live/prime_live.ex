@@ -19,6 +19,7 @@ defmodule PrimeScalerWeb.PrimeLive do
         n: nil,
         prime_result: nil, 
         active_processes: PrimeScaler.get_active_processes(),
+        processes_by_node: PrimeScaler.PrimeRegistry.get_processes_by_node(),
         calculating: false,
         calculating_numbers: MapSet.new(),
         prime_values: %{}, # Map of number => prime value for tooltips
@@ -185,8 +186,11 @@ defmodule PrimeScalerWeb.PrimeLive do
 
   @impl true
   def handle_info({:process_registered, _n}, socket) do
-    # Update the list of active processes
-    {:noreply, assign(socket, active_processes: PrimeScaler.get_active_processes())}
+    # Update the list of active processes and node status
+    {:noreply, assign(socket,
+      active_processes: PrimeScaler.get_active_processes(),
+      processes_by_node: PrimeScaler.PrimeRegistry.get_processes_by_node()
+    )}
   end
 
   @impl true

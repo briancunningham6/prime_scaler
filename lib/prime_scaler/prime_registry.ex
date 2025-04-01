@@ -77,14 +77,27 @@ defmodule PrimeScaler.PrimeRegistry do
     # Create an ETS table to store prime numbers
     table = :ets.new(@table_name, [:set, :named_table, :public, read_concurrency: true])
 
-    # Initialize the state with an empty set of active processes
-    {:ok, %{active_processes: MapSet.new(), table: table}}
+    # Initialize the state with an empty set of active processes and node tracking
+    {:ok, %{active_processes: MapSet.new(), table: table, processes_by_node: %{}}}
+  end
+
+  def get_processes_by_node do
+    GenServer.call(__MODULE__, :get_processes_by_node)
   end
 
   @impl true
   def handle_cast({:register, n, pid}, state) do
     # Monitor the process so we know when it dies
     Process.monitor(pid)
+    node = node(pid)
+
+    # Update processes by node count
+    processes_by_node = Map.update(
+      state.processes_by_node,
+      node,
+      1,
+      &(&1 + 1)
+    )
 
     # Add the process to our tracking
     updated_processes = MapSet.put(state.active_processes, n)
@@ -96,7 +109,14 @@ defmodule PrimeScaler.PrimeRegistry do
       {:process_registered, n}
     )
 
-    {:noreply, %{state | active_processes: updated_processes}}
+    {:noreply, %{state | 
+      active_processes: updated_processes,
+      processes_by_node: processes_by_node
+    }}
+  end
+
+  def handle_call(:get_processes_by_node, _from, state) do
+    {:reply, state.processes_by_node, state}
   end
 
   @impl true
