@@ -18,6 +18,14 @@ defmodule PrimeScalerWeb.PrimeLive do
 
     {:ok,
      assign(socket,
+       n: nil,
+       error: nil,
+       calculating: false,
+       prime_result: nil,
+       calculation_time: nil,
+       active_processes: [],
+       calculating_numbers: MapSet.new(),
+       prime_values: %{},
        processes_by_node: processes_by_node,
        connected_nodes: connected_nodes
      )}
