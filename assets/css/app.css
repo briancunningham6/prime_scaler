@@ -1,7 +1,5 @@
 /* Path: assets/css/app.css */
-@import "tailwindcss/base";
-@import "tailwindcss/components";
-@import "tailwindcss/utilities";
+/* Using Tailwind via CDN, no imports needed */
 
 /* Custom styles */
 .grid-container {

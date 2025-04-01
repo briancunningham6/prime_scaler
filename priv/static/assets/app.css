@@ -1,24 +1,31 @@
-@import "tailwindcss/base";
-@import "tailwindcss/components";
-@import "tailwindcss/utilities";
-
-/* Custom styles for the grid visualization */
+/* css/app.css */
 .grid-container {
-  padding: 10px;
-  background-color: #f9fafb;
-  border-radius: 0.25rem;
+  display: grid;
+  grid-template-columns: repeat(20, 1fr);
+  grid-gap: 2px;
 }
-
-/* For tooltip on hover over cells */
-[title]:hover:after {
-  content: attr(title);
-  padding: 4px 8px;
-  color: #fff;
-  background-color: rgba(0, 0, 0, 0.8);
-  border-radius: 4px;
-  position: absolute;
-  z-index: 100;
-  white-space: nowrap;
-  font-size: 12px;
-  pointer-events: none;
+.grid-cell {
+  aspect-ratio: 1/1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  border-radius: 2px;
 }
+.grid-cell.active {
+  background-color: rgb(34, 197, 94);
+  color: white;
+}
+.grid-cell.inactive {
+  background-color: rgb(241, 245, 249);
+  color: rgb(100, 116, 139);
+}
+.prime-result {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+.calculation-time {
+  font-size: 0.875rem;
+  font-style: italic;
+}
+/*# sourceMappingURL=data:application/json;base64,ewogICJ2ZXJzaW9uIjogMywKICAic291cmNlcyI6IFsiLi4vLi4vLi4vYXNzZXRzL2Nzcy9hcHAuY3NzIl0sCiAgInNvdXJjZXNDb250ZW50IjogWyIvKiBQYXRoOiBhc3NldHMvY3NzL2FwcC5jc3MgKi9cbi8qIFVzaW5nIFRhaWx3aW5kIHZpYSBDRE4sIG5vIGltcG9ydHMgbmVlZGVkICovXG5cbi8qIEN1c3RvbSBzdHlsZXMgKi9cbi5ncmlkLWNvbnRhaW5lciB7XG4gIGRpc3BsYXk6IGdyaWQ7XG4gIGdyaWQtdGVtcGxhdGUtY29sdW1uczogcmVwZWF0KDIwLCAxZnIpO1xuICBncmlkLWdhcDogMnB4O1xufVxuXG4uZ3JpZC1jZWxsIHtcbiAgYXNwZWN0LXJhdGlvOiAxLzE7XG4gIGRpc3BsYXk6IGZsZXg7XG4gIGFsaWduLWl0ZW1zOiBjZW50ZXI7XG4gIGp1c3RpZnktY29udGVudDogY2VudGVyO1xuICBmb250LXNpemU6IDAuN3JlbTtcbiAgYm9yZGVyLXJhZGl1czogMnB4O1xufVxuXG4uZ3JpZC1jZWxsLmFjdGl2ZSB7XG4gIGJhY2tncm91bmQtY29sb3I6IHJnYigzNCwgMTk3LCA5NCk7XG4gIGNvbG9yOiB3aGl0ZTtcbn1cblxuLmdyaWQtY2VsbC5pbmFjdGl2ZSB7XG4gIGJhY2tncm91bmQtY29sb3I6IHJnYigyNDEsIDI0NSwgMjQ5KTtcbiAgY29sb3I6IHJnYigxMDAsIDExNiwgMTM5KTtcbn1cblxuLnByaW1lLXJlc3VsdCB7XG4gIGZvbnQtc2l6ZTogMS41cmVtO1xuICBmb250LXdlaWdodDogYm9sZDtcbn1cblxuLmNhbGN1bGF0aW9uLXRpbWUge1xuICBmb250LXNpemU6IDAuODc1cmVtO1xuICBmb250LXN0eWxlOiBpdGFsaWM7XG59Il0sCiAgIm1hcHBpbmdzIjogIjtBQUlBO0FBQ0U7QUFDQTtBQUNBO0FBQUE7QUFHRjtBQUNFO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUFBO0FBR0Y7QUFDRTtBQUNBO0FBQUE7QUFHRjtBQUNFO0FBQ0E7QUFBQTtBQUdGO0FBQ0U7QUFDQTtBQUFBO0FBR0Y7QUFDRTtBQUNBO0FBQUE7IiwKICAibmFtZXMiOiBbXQp9Cg== */
