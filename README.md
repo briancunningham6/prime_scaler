@@ -71,6 +71,25 @@ The system distributes calculation load across multiple nodes using consistent h
    - Process state preservation across the cluster
    - Efficient resource utilization across all nodes
 
+### Failure Handling
+
+The system implements robust failure handling, particularly for the Go-based prime calculator:
+
+1. Process Isolation:
+   - Each prime calculation runs in its own process
+   - Failures in one calculation don't affect other ongoing calculations
+   - The LiveView interface remains responsive regardless of calculation failures
+
+2. Go Calculator Fallback:
+   - If the Go implementation fails, the system automatically falls back to the Elixir implementation
+   - Failures are logged for monitoring and debugging
+   - The user experience remains uninterrupted during fallbacks
+
+3. Error Recovery:
+   - Failed calculations are automatically retried using the Elixir implementation
+   - Process state is preserved even if calculations fail
+   - The system maintains consistency across nodes during failures
+
 Key components:
 - `PrimeCalculator`: Implements the prime number calculation algorithm
 - `PrimeServer`: GenServer that handles calculation and caching
