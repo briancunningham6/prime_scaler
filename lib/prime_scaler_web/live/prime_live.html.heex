@@ -96,9 +96,11 @@
         <div class="grid-container" id="tooltip-container" phx-hook="TooltipHandler">
           <%= for index <- 1..10_000 do %>
             <div 
+              id={"cell-#{index}"}
               class={cell_class(index, @active_processes, @calculating_numbers)} 
               phx-click="select_number"
               phx-value-number={index}
+              phx-update="ignore"
             >
               <div class="grid-cell-tooltip">
                 <%= if Map.has_key?(@prime_values, index) do %>

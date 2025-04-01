@@ -14,6 +14,13 @@ let Hooks = {
           tooltip.style.top = `${e.clientY - 10}px`;
         }
       });
+      
+      this.handleEvent("update_cell", ({id, class: newClass}) => {
+        const cell = document.getElementById(id);
+        if (cell) {
+          cell.className = newClass;
+        }
+      });
     }
   }
 }
