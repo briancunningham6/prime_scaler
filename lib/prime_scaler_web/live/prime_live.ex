@@ -92,6 +92,20 @@ defmodule PrimeScalerWeb.PrimeLive do
   end
   
   @impl true
+  def handle_event("kill_process", %{"number" => number_str}, socket) do
+    case Integer.parse(number_str) do
+      {n, _} when n > 0 and n <= 10_000 ->
+        if pid = PrimeRegistry.lookup(n) do
+          Process.exit(pid, :kill)
+          {:noreply, socket}
+        else
+          {:noreply, socket}
+        end
+      _ ->
+        {:noreply, socket}
+    end
+  end
+
   def handle_event("select_number", %{"number" => number_str}, socket) do
     # Parse the number from the grid cell
     case Integer.parse(number_str) do

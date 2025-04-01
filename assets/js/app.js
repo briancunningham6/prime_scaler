@@ -14,7 +14,7 @@ let Hooks = {
           tooltip.style.top = `${e.clientY - 10}px`;
         }
       });
-      
+
       this.handleEvent("update_cell", ({id, class: newClass}) => {
         const cell = document.getElementById(id);
         if (cell) {
@@ -24,6 +24,16 @@ let Hooks = {
     }
   }
 }
+
+// Handle right-click context menu
+document.addEventListener('contextmenu', (e) => {
+  const cell = e.target.closest('[data-context-menu]');
+  if (cell && cell.classList.contains('active')) {
+    e.preventDefault();
+    const number = cell.getAttribute('phx-value-number');
+    liveSocket.getSocket().channels[0].push('kill_process', { number });
+  }
+});
 
 // Get CSRF Token
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
