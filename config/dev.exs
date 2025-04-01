@@ -11,7 +11,12 @@ config :prime_scaler, PrimeScalerWeb.Endpoint,
   code_reloader: true,
   debug_errors: true,
   secret_key_base: "N2sVdgkxZDIUBUzkB6eqeUsPrb1W79Uhu7wUDBT+GgY5c0dH6pUYpQR2kU5aInwc",
-  watchers: []
+  watchers: [
+    # Start Tailwind CSS watcher
+    tailwind: {Tailwind, :install_and_run, [:default, ~w(--watch)]},
+    # Start esbuild watcher
+    esbuild: {Esbuild, :install_and_run, [:default, ~w(--watch)]}
+  ]
 
 # Watch static and templates for browser reloading.
 # Disabling LiveReload for faster startup
