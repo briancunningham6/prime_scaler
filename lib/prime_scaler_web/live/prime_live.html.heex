@@ -64,8 +64,9 @@
           <li>If yes, reuse the existing process to get the result immediately</li>
         </ol>
         <p class="mb-4">
-          The grid below shows all active processes. Each blue cell represents a number that has been calculated
-          and has a dedicated Elixir process.
+          The grid below shows all active processes. Blue cells indicate numbers being calculated right now. 
+          Green cells represent numbers that have been calculated and have a dedicated Elixir process.
+          Hover over any cell to see details and the calculated prime value.
         </p>
         <p>
           <strong>Active Processes:</strong> <%= length(@active_processes) %>
@@ -77,19 +78,26 @@
     <div class="bg-white shadow-md rounded p-6 mb-4 overflow-auto">
       <h2 class="text-xl font-bold mb-4">Process Visualization</h2>
       <p class="mb-4">
-        Each cell below represents an integer from 1 to 10,000. Green cells indicate active Elixir processes
-        calculating or caching prime numbers.
+        Each cell below represents an integer from 1 to 10,000. Blue flashing cells are being calculated now.
+        Green cells indicate finished calculations with active Elixir processes caching the results.
+        Hover over any cell to see the prime number value if it has been calculated.
       </p>
       
       <div class="overflow-auto max-h-96">
         <div class="grid-container">
           <%= for index <- 1..10_000 do %>
             <div 
-              class={active_cell?(index, @active_processes) && "grid-cell active" || "grid-cell inactive"} 
-              title={"Number: #{index}"}
+              class={cell_class(index, @active_processes, @calculating_numbers)} 
               phx-click="select_number"
               phx-value-number={index}
             >
+              <div class="grid-cell-tooltip">
+                <%= if Map.has_key?(@prime_values, index) do %>
+                  N: <%= index %> → Prime: <%= @prime_values[index] %>
+                <% else %>
+                  Number: <%= index %>
+                <% end %>
+              </div>
               &nbsp;
             </div>
           <% end %>
@@ -99,6 +107,10 @@
       <!-- Grid Legend and Information -->
       <div class="mt-4 flex flex-wrap gap-4">
         <div class="flex items-center">
+          <div class="w-4 h-4 bg-blue-500 rounded mr-2"></div>
+          <span>Calculating</span>
+        </div>
+        <div class="flex items-center">
           <div class="w-4 h-4 bg-green-500 rounded mr-2"></div>
           <span>Active Process</span>
         </div>
@@ -107,7 +119,7 @@
           <span>Inactive</span>
         </div>
         <div>
-          <span class="font-semibold">Tip:</span> Click on a cell to calculate that specific number
+          <span class="font-semibold">Tip:</span> Click on a cell to calculate that specific number. Hover to see prime values.
         </div>
       </div>
     </div>

@@ -20,6 +20,8 @@ defmodule PrimeScalerWeb.PrimeLive do
         prime_result: nil, 
         active_processes: PrimeScaler.get_active_processes(),
         calculating: false,
+        calculating_numbers: MapSet.new(),
+        prime_values: %{}, # Map of number => prime value for tooltips
         error: nil,
         calculation_time: nil
       )
@@ -33,7 +35,16 @@ defmodule PrimeScalerWeb.PrimeLive do
     case Integer.parse(n_str) do
       {n, _} when n > 0 and n <= 10_000 ->
         # Clear any previous errors and start calculation
-        socket = assign(socket, error: nil, calculating: true, n: n, calculation_time: nil, prime_result: nil)
+        socket = 
+          socket
+          |> assign(
+            error: nil, 
+            calculating: true, 
+            n: n, 
+            calculation_time: nil, 
+            prime_result: nil,
+            calculating_numbers: MapSet.put(socket.assigns.calculating_numbers, n)
+          )
         
         # Get the LiveView PID
         pid = self()
@@ -84,7 +95,16 @@ defmodule PrimeScalerWeb.PrimeLive do
     case Integer.parse(number_str) do
       {n, _} when n > 0 and n <= 10_000 ->
         # Clear any previous errors and start calculation
-        socket = assign(socket, error: nil, calculating: true, n: n, calculation_time: nil, prime_result: nil)
+        socket = 
+          socket
+          |> assign(
+            error: nil, 
+            calculating: true, 
+            n: n, 
+            calculation_time: nil, 
+            prime_result: nil,
+            calculating_numbers: MapSet.put(socket.assigns.calculating_numbers, n)
+          )
         
         # Get the LiveView PID
         pid = self()
@@ -116,7 +136,10 @@ defmodule PrimeScalerWeb.PrimeLive do
         n: n,
         prime_result: result,
         calculating: false,
-        calculation_time: calculation_time
+        calculation_time: calculation_time,
+        calculating_numbers: MapSet.delete(socket.assigns.calculating_numbers, n),
+        # Store the calculated prime value for tooltips
+        prime_values: Map.put(socket.assigns.prime_values, n, result)
       )
       
     {:noreply, socket}
@@ -130,7 +153,10 @@ defmodule PrimeScalerWeb.PrimeLive do
       |> assign(
         n: n,
         prime_result: result,
-        calculating: false
+        calculating: false,
+        calculating_numbers: MapSet.delete(socket.assigns.calculating_numbers, n),
+        # Store the calculated prime value for tooltips
+        prime_values: Map.put(socket.assigns.prime_values, n, result)
       )
       
     {:noreply, socket}
@@ -152,6 +178,8 @@ defmodule PrimeScalerWeb.PrimeLive do
         n: nil,
         prime_result: nil,
         calculating: false,
+        calculating_numbers: MapSet.new(),
+        prime_values: %{},
         error: nil,
         calculation_time: nil
       )
@@ -186,6 +214,20 @@ defmodule PrimeScalerWeb.PrimeLive do
   """
   def active_cell?(index, active_processes) do
     index in active_processes
+  end
+  
+  @doc """
+  Returns the appropriate class for a grid cell based on its state.
+  """
+  def cell_class(index, active_processes, calculating_numbers) do
+    cond do
+      # Cell is being calculated - blue flashing
+      index in calculating_numbers -> "grid-cell calculating"
+      # Cell has a process - green
+      index in active_processes -> "grid-cell active"
+      # Cell is inactive - gray
+      true -> "grid-cell inactive"
+    end
   end
   
   @doc """
