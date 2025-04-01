@@ -43,7 +43,10 @@
         <%= if @prime_result do %>
           <div class="mt-6 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
             <p class="font-bold">Result:</p>
-            <p>The <%= @n %>th prime number is <%= @prime_result %></p>
+            <p class="prime-result">The <%= @n %>th prime number is <%= @prime_result %></p>
+            <%= if @calculation_time do %>
+              <p class="calculation-time">Calculated in <%= format_calculation_time(@calculation_time) %></p>
+            <% end %>
           </div>
         <% end %>
       </div>
@@ -78,10 +81,11 @@
         calculating or caching prime numbers.
       </p>
       
-      <div class="grid-container overflow-auto max-h-96">
-        <div class="flex flex-wrap" style="width: 500px">
+      <div class="overflow-auto max-h-96">
+        <div class="grid-container">
           <%= for index <- 1..10_000 do %>
-            <div class={cell_class(index, @active_processes)} title={"Number: #{index}"}>
+            <div class={active_cell?(index, @active_processes) && "grid-cell active" || "grid-cell inactive"} title={"Number: #{index}"}>
+              <%= index %>
             </div>
           <% end %>
         </div>

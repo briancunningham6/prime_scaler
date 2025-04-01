@@ -20,7 +20,8 @@ defmodule PrimeScalerWeb.PrimeLive do
         prime_result: nil, 
         active_processes: PrimeScaler.get_active_processes(),
         calculating: false,
-        error: nil
+        error: nil,
+        calculation_time: nil
       )
 
     {:ok, socket}
@@ -31,17 +32,21 @@ defmodule PrimeScalerWeb.PrimeLive do
     # Parse and validate the input
     case Integer.parse(n_str) do
       {n, _} when n > 0 and n <= 10_000 ->
-        # Clear any previous errors
-        socket = assign(socket, error: nil, calculating: true, n: n)
+        # Clear any previous errors and start calculation
+        socket = assign(socket, error: nil, calculating: true, n: n, calculation_time: nil, prime_result: nil)
         
         # Get the LiveView PID
         pid = self()
         
         # Spawn a task to calculate the prime number so the UI remains responsive
         Task.start(fn ->
+          start_time = System.monotonic_time(:millisecond)
           result = PrimeServer.get_prime(n)
+          end_time = System.monotonic_time(:millisecond)
+          calculation_time = end_time - start_time
+          
           # Send message to the LiveView process specifically
-          send(pid, {:prime_calculated, n, result})
+          send(pid, {:prime_calculated, n, result, calculation_time})
         end)
         
         {:noreply, socket}
@@ -66,15 +71,31 @@ defmodule PrimeScalerWeb.PrimeLive do
         n: nil,
         prime_result: nil,
         calculating: false,
-        error: nil
+        error: nil,
+        calculation_time: nil
       )
       
     {:noreply, socket}
   end
 
   @impl true
+  def handle_info({:prime_calculated, n, result, calculation_time}, socket) do
+    # Update the socket with the calculated prime and timing info
+    socket =
+      socket
+      |> assign(
+        n: n,
+        prime_result: result,
+        calculating: false,
+        calculation_time: calculation_time
+      )
+      
+    {:noreply, socket}
+  end
+  
+  # For backward compatibility with any existing processes
+  @impl true
   def handle_info({:prime_calculated, n, result}, socket) do
-    # Update the socket with the calculated prime
     socket =
       socket
       |> assign(
@@ -102,7 +123,8 @@ defmodule PrimeScalerWeb.PrimeLive do
         n: nil,
         prime_result: nil,
         calculating: false,
-        error: nil
+        error: nil,
+        calculation_time: nil
       )
       
     {:noreply, socket}
@@ -138,15 +160,13 @@ defmodule PrimeScalerWeb.PrimeLive do
   end
   
   @doc """
-  Returns the appropriate CSS classes for a grid cell.
+  Formats the calculation time result.
   """
-  def cell_class(index, active_processes) do
-    base_class = "w-2 h-2 border border-gray-300"
-    
-    if active_cell?(index, active_processes) do
-      "#{base_class} bg-blue-500"
-    else
-      "#{base_class} bg-white"
+  def format_calculation_time(time_ms) when is_integer(time_ms) do
+    cond do
+      time_ms < 1000 -> "#{time_ms}ms"
+      time_ms < 60_000 -> "#{Float.round(time_ms / 1000, 1)}s"
+      true -> "#{div(time_ms, 60_000)}m #{rem(div(time_ms, 1000), 60)}s"
     end
   end
 end
