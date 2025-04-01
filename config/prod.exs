@@ -4,6 +4,13 @@ import Config
 # to something meaningful, Phoenix uses this information
 # when generating URLs.
 
+# Configure the HTTP endpoint for production
+config :prime_scaler, PrimeScalerWeb.Endpoint,
+  http: [
+    port: 3000,
+    ip: {0, 0, 0, 0}
+  ]
+
 # Do not print debug messages in production
 config :logger, level: :info
 
