@@ -28,7 +28,13 @@ defmodule PrimeScaler.PrimeRegistry do
 
   def get_processes_by_node do
     Registry.select(registry_name(), [{{:_, :"$1", :_}, [], [:"$1"]}])
-    |> Enum.group_by(&node(Process.whereis(&1)))
+    |> Enum.group_by(fn pid -> 
+      try do
+        node(pid)
+      rescue
+        _ -> node()
+      end
+    end)
   end
 
   def get_connected_nodes do
