@@ -32,6 +32,7 @@ defmodule PrimeScaler.PrimeServer do
     end
   end
 
+
   @doc """
   Gets the nth prime number. If the server for that prime number
   doesn't exist yet, it creates one.
