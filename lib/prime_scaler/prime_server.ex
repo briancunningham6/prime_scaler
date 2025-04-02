@@ -14,7 +14,22 @@ defmodule PrimeScaler.PrimeServer do
   Starts a new Prime Server process.
   """
   def start_link(n) when is_integer(n) and n > 0 and n <= 10_000 do
-    GenServer.start_link(__MODULE__, n, name: via_tuple(n))
+    current_node = Node.self()
+    all_nodes = [current_node | Node.list()]
+
+    case all_nodes do
+      [] ->
+        Logger.debug(" If no other nodes, start locally")
+        GenServer.start_link(__MODULE__, n, name: via_tuple(n))
+      nodes ->
+        case :rpc.call(:"secondary@192.168.64.2", GenServer, :start_link, [__MODULE__, n, nodes]) do
+          {:ok, pid} ->
+            {:ok, pid}
+          {:badrpc, reason} ->
+            Logger.error("Failed to start GenServer on node: #{inspect(reason)}")
+            {:error, reason}
+        end
+    end
   end
 
   @doc """
@@ -40,7 +55,7 @@ defmodule PrimeScaler.PrimeServer do
   def init(n) do
     # Register this process with the registry
     PrimeRegistry.register_process(n)
-    
+
     # We initially don't calculate the prime number
     # but wait for someone to request it
     {:ok, %{n: n, prime: nil}}
@@ -51,7 +66,7 @@ defmodule PrimeScaler.PrimeServer do
     # Calculate the prime number when first requested
     Logger.info("Calculating #{n}th prime number")
     prime = case Process.get(:calculation_method, :elixir) do
-      :go -> 
+      :go ->
         try do
           {result, 0} = System.cmd(Path.join(File.cwd!(), "prime_go"), [Integer.to_string(n)])
           String.to_integer(result)
@@ -61,13 +76,13 @@ defmodule PrimeScaler.PrimeServer do
             Logger.warn("Go calculation failed for n=#{n}, falling back to Elixir implementation")
             PrimeCalculator.calculate_prime(n)
         end
-      _ -> 
+      _ ->
         PrimeCalculator.calculate_prime(n)
     end
-    
+
     # Store the result in ETS for quick restart recovery
     PrimeRegistry.store_prime(n, prime)
-    
+
     # Broadcast that a new prime has been calculated
     # We're not including calculation time here since it's now measured in the LiveView
     Phoenix.PubSub.broadcast(
@@ -75,7 +90,7 @@ defmodule PrimeScaler.PrimeServer do
       "primes",
       {:prime_calculated, n, prime}
     )
-    
+
     {:reply, prime, %{state | prime: prime}}
   end
 
