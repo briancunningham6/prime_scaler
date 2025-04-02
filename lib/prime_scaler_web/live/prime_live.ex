@@ -112,8 +112,9 @@ defmodule PrimeScalerWeb.PrimeLive do
     # Parse the number from the grid cell
     case Integer.parse(number_str) do
       {n, _} when n > 0 and n <= 10_000 ->
-        # Send targeted update for just this cell
-        cell_id = "cell-#{n}"
+        # Add number to calculating set
+        calculating_numbers = MapSet.put(socket.assigns.calculating_numbers, n)
+        
         socket = 
           socket
           |> assign(
@@ -122,12 +123,8 @@ defmodule PrimeScalerWeb.PrimeLive do
             n: n, 
             calculation_time: nil, 
             prime_result: nil,
-            calculating_numbers: MapSet.put(socket.assigns.calculating_numbers, n)
+            calculating_numbers: calculating_numbers
           )
-          |> push_event("update_cell", %{
-            id: cell_id, 
-            class: cell_class(n, socket.assigns.active_processes, MapSet.put(socket.assigns.calculating_numbers, n))
-          })
 
         # Get the LiveView PID
         pid = self()
