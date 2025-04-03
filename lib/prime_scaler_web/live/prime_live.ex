@@ -15,6 +15,7 @@ defmodule PrimeScalerWeb.PrimeLive do
 
     processes_by_node = PrimeScaler.PrimeRegistry.get_processes_by_node()
     connected_nodes = [node() | PrimeScaler.PrimeRegistry.get_connected_nodes()]
+    active_processes = PrimeScaler.get_active_processes()
 
     {:ok,
      assign(socket,
@@ -23,7 +24,7 @@ defmodule PrimeScalerWeb.PrimeLive do
        calculating: false,
        prime_result: nil,
        calculation_time: nil,
-       active_processes: [],
+       active_processes: active_processes,
        calculating_numbers: MapSet.new(),
        prime_values: %{},
        processes_by_node: processes_by_node,
@@ -159,7 +160,9 @@ defmodule PrimeScalerWeb.PrimeLive do
         calculation_time: calculation_time,
         calculating_numbers: MapSet.delete(socket.assigns.calculating_numbers, n),
         # Store the calculated prime value for tooltips
-        prime_values: Map.put(socket.assigns.prime_values, n, result)
+        prime_values: Map.put(socket.assigns.prime_values, n, result),
+        # Update active processes
+        active_processes: [n | socket.assigns.active_processes]
       )
 
     {:noreply, socket}
@@ -183,10 +186,17 @@ defmodule PrimeScalerWeb.PrimeLive do
   end
 
   @impl true
-  def handle_info({:process_registered, _n}, socket) do
+  def handle_info({:process_registered, n}, socket) do
     # Update the list of active processes and node status
+    active_processes = 
+      if n do
+        [n | socket.assigns.active_processes]
+      else
+        PrimeScaler.get_active_processes()
+      end
+
     {:noreply, assign(socket,
-      active_processes: PrimeScaler.get_active_processes(),
+      active_processes: active_processes,
       processes_by_node: PrimeScaler.PrimeRegistry.get_processes_by_node()
     )}
   end
