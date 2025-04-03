@@ -244,9 +244,9 @@ defmodule PrimeScalerWeb.PrimeLive do
   def cell_class(index, active_processes, calculating_numbers) do
     cond do
       # Cell is being calculated - blue flashing
-      index in calculating_numbers -> "grid-cell calculating"
+      MapSet.member?(calculating_numbers, index) -> "grid-cell calculating"
       # Cell has a process - green
-      index in active_processes -> "grid-cell active"
+      Map.has_key?(socket.assigns.prime_values, index) -> "grid-cell active"
       # Cell is inactive - gray
       true -> "grid-cell inactive"
     end
