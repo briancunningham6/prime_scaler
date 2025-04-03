@@ -16,19 +16,23 @@ defmodule PrimeScaler.PrimeServer do
   def start_link(n) when is_integer(n) and n > 0 and n <= 10_000 do
     current_node = Node.self()
     all_nodes = [current_node | Node.list()]
-
-    case all_nodes do
-      [] ->
-        Logger.debug(" If no other nodes, start locally")
+    
+    # Select target node using round-robin or any other strategy
+    target_node = case all_nodes do
+      [] -> current_node
+      nodes -> Enum.random(nodes)
+    end
+    
+    # Start the GenServer on the target node with proper registration
+    case :rpc.call(target_node, GenServer, :start_link, 
+      [__MODULE__, n, [name: {:via, Registry, {PrimeRegistry.registry_name(), n}}]]) do
+      {:ok, pid} ->
+        Logger.info("Started prime server for #{n} on node #{target_node}")
+        {:ok, pid}
+      {:badrpc, reason} ->
+        Logger.error("Failed to start GenServer on node #{target_node}: #{inspect(reason)}")
+        # Fallback to local node if remote fails
         GenServer.start_link(__MODULE__, n, name: via_tuple(n))
-      nodes ->
-        case :rpc.call(:"secondary@192.168.64.2", GenServer, :start_link, [__MODULE__, n, nodes]) do
-          {:ok, pid} ->
-            {:ok, pid}
-          {:badrpc, reason} ->
-            Logger.error("Failed to start GenServer on node: #{inspect(reason)}")
-            {:error, reason}
-        end
     end
   end
 
