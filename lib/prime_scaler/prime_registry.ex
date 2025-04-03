@@ -23,14 +23,19 @@ defmodule PrimeScaler.PrimeRegistry do
   end
 
   def get_active_processes do
-    # Get all processes from the registry and filter only those that are alive
-    Registry.select(registry_name(), [{{:_, :"$1", :_}, [], [:"$1"]}])
-    |> Enum.filter(fn n ->
-      case Registry.lookup(registry_name(), n) do
-        [{pid, _}] -> Process.alive?(pid)
-        [] -> false
-      end
-    end)
+    # Get processes from ETS table and verify they're alive
+    case :ets.tab2list(:processes_table) do
+      [] -> []
+      processes ->
+        processes
+        |> Enum.map(fn {n, _node} -> n end)
+        |> Enum.filter(fn n ->
+          case Registry.lookup(registry_name(), n) do
+            [{pid, _}] -> Process.alive?(pid)
+            [] -> false
+          end
+        end)
+    end
   end
 
   def get_processes_by_node do
@@ -68,17 +73,6 @@ defmodule PrimeScaler.PrimeRegistry do
     :ets.insert(:processes_table, {n, current_node})
     # Register the process in the registry and update node counts
     GenServer.cast(__MODULE__, {:register_process, n})
-  end
-
-  def get_active_processes do
-    # Get all processes from the registry and filter only those that are alive
-    Registry.select(registry_name(), [{{:_, :"$1", :_}, [], [:"$1"]}])
-    |> Enum.filter(fn n ->
-      case Registry.lookup(registry_name(), n) do
-        [{pid, _}] -> Process.alive?(pid)
-        [] -> false
-      end
-    end)
   end
 
   @impl true
