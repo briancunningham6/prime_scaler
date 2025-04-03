@@ -1,3 +1,4 @@
+
 defmodule PrimeScaler.PrimeServer do
   @moduledoc """
   GenServer responsible for calculating and caching prime numbers.
@@ -40,16 +41,7 @@ defmodule PrimeScaler.PrimeServer do
             GenServer.start_link(__MODULE__, n, name: via_tuple(n))
         end
     end
-      {:ok, pid} ->
-        Logger.info("Started prime server for #{n} on node #{target_node}")
-        {:ok, pid}
-      {:badrpc, reason} ->
-        Logger.error("Failed to start GenServer on node #{target_node}: #{inspect(reason)}")
-        # Fallback to local node if remote fails
-        GenServer.start_link(__MODULE__, n, name: via_tuple(n))
-    end
   end
-
 
   @doc """
   Gets the nth prime number. If the server for that prime number
@@ -103,7 +95,6 @@ defmodule PrimeScaler.PrimeServer do
     PrimeRegistry.store_prime(n, prime)
 
     # Broadcast that a new prime has been calculated
-    # We're not including calculation time here since it's now measured in the LiveView
     Phoenix.PubSub.broadcast(
       PrimeScaler.PubSub,
       "primes",
