@@ -50,8 +50,8 @@ defmodule PrimeScaler.PrimeRegistry do
   end
 
   def register_process(n) do
-    # Register the process in the registry and update node counts
-    GenServer.cast(__MODULE__, {:register_process, n})
+    # Register the process in the registry and update node counts for the current node
+    GenServer.cast({__MODULE__, node()}, {:register_process, n})
   end
 
   @impl true
