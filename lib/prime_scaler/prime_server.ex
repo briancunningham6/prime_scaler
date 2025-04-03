@@ -26,7 +26,7 @@ defmodule PrimeScaler.PrimeServer do
     
     # Start the GenServer on the target node
     case :rpc.call(target_node, GenServer, :start_link, 
-      [__MODULE__, n, [name: via_tuple(n)]]) do
+      [__MODULE__, n, [name: via_tuple(n)]], 10000) do
       {:ok, pid} ->
         # Register the process with the node it's actually running on
         :rpc.call(target_node, PrimeRegistry, :register_process, [n])
