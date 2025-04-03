@@ -16,35 +16,21 @@ defmodule PrimeScaler.PrimeServer do
   """
   def start_link(n) when is_integer(n) and n > 0 and n <= 10_000 do
     current_node = Node.self()
-    all_nodes = [current_node | Node.list()]
     
-    # Select target node using round-robin
-    target_node = case all_nodes do
-      [] -> current_node
-      nodes -> Enum.random(nodes)
-    end
+    # First register the process name
+    PrimeRegistry.register_process(n)
     
-    # Start the GenServer on the target node
-    case :rpc.call(target_node, GenServer, :start_link, 
-      [__MODULE__, n, [name: via_tuple(n)]], 5000) do
-      {:ok, pid} ->
-        Logger.info("Started prime server for #{n} on node #{target_node}")
-        # Register the process with the registry
-        :rpc.call(target_node, PrimeRegistry, :register_process, [n])
-        {:ok, pid}
+    # Start the GenServer locally with the registered name
+    case GenServer.start_link(__MODULE__, n, name: via_tuple(n)) do
+      {:ok, pid} = result ->
+        Logger.info("Started prime server for #{n} on node #{current_node}")
+        result
       {:error, {:already_started, pid}} ->
         Logger.info("Process for #{n} already exists")
         {:ok, pid}
       error ->
-        Logger.error("Failed to start GenServer on #{target_node}: #{inspect(error)}")
-        # Fallback to local node
-        case GenServer.start_link(__MODULE__, n, name: via_tuple(n)) do
-          {:ok, pid} = result ->
-            PrimeRegistry.register_process(n)
-            result
-          error ->
-            error
-        end
+        Logger.error("Failed to start GenServer: #{inspect(error)}")
+        error
     end
   end
 
