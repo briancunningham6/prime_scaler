@@ -92,7 +92,10 @@ defmodule PrimeScaler.PrimeServer do
       PrimeScaler.PubSub,
       "primes",
       {:prime_calculated, n, prime}
+    )
 
+    {:reply, prime, %{state | prime: prime}}
+  end
 
   # Select a target node using round-robin distribution
   defp select_target_node(nodes) do
@@ -106,10 +109,6 @@ defmodule PrimeScaler.PrimeServer do
     # Return the selected node
     Enum.at(nodes, next_index)
   end
-
-    )
-
-    {:reply, prime, %{state | prime: prime}}
   end
 
   @impl true
