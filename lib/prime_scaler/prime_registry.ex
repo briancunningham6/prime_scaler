@@ -43,26 +43,15 @@ defmodule PrimeScaler.PrimeRegistry do
   end
 
   def lookup(n) do
-    # Try local lookup first
     case Registry.lookup(registry_name(), n) do
-      [{pid, _}] when is_pid(pid) ->
-        if Process.alive?(pid), do: pid, else: nil
-      _ ->
-        # Try remote nodes
-        Node.list()
-        |> Enum.find_value(fn node ->
-          case :rpc.call(node, Registry, :lookup, [registry_name(), n]) do
-            [{pid, _}] when is_pid(pid) ->
-              if :rpc.call(node, Process, :alive?, [pid]), do: pid, else: nil
-            _ -> nil
-          end
-        end)
+      [{pid, _}] -> pid
+      [] -> nil
     end
   end
 
   def register_process(n) do
-    # Register the process in the registry and update node counts for the current node
-    GenServer.cast({__MODULE__, node()}, {:register_process, n})
+    # Register the process in the registry and update node counts
+    GenServer.cast(__MODULE__, {:register_process, n})
   end
 
   @impl true
