@@ -15,15 +15,17 @@ defmodule PrimeScaler.PrimeServer do
   Starts a new Prime Server process.
   """
   def start_link(n) when is_integer(n) and n > 0 and n <= 10_000 do
-    current_node = Node.self()
+    # Select a target node using round-robin among connected nodes
+    nodes = [Node.self() | Node.list()]
+    target_node = select_target_node(nodes)
     
     # First register the process name
     PrimeRegistry.register_process(n)
     
-    # Start the GenServer locally with the registered name
-    case GenServer.start_link(__MODULE__, n, name: via_tuple(n)) do
+    # Start the GenServer on the selected node with the registered name
+    case :rpc.call(target_node, GenServer, :start_link, [__MODULE__, n, [name: via_tuple(n)]]) do
       {:ok, pid} = result ->
-        Logger.info("Started prime server for #{n} on node #{current_node}")
+        Logger.info("Started prime server for #{n} on node #{target_node}")
         result
       {:error, {:already_started, pid}} ->
         Logger.info("Process for #{n} already exists")
@@ -90,6 +92,21 @@ defmodule PrimeScaler.PrimeServer do
       PrimeScaler.PubSub,
       "primes",
       {:prime_calculated, n, prime}
+
+
+  # Select a target node using round-robin distribution
+  defp select_target_node(nodes) do
+    # Get the last used node index from the process dictionary
+    last_index = Process.get(:last_node_index, -1)
+    next_index = rem(last_index + 1, length(nodes))
+    
+    # Store the new index
+    Process.put(:last_node_index, next_index)
+    
+    # Return the selected node
+    Enum.at(nodes, next_index)
+  end
+
     )
 
     {:reply, prime, %{state | prime: prime}}
