@@ -76,18 +76,29 @@ defmodule PrimeScaler.PrimeRegistry do
     
     # Monitor the process for termination
     if pid = lookup(n) do
-      Process.monitor({:via, Registry, {registry_name(), n}})
+      Process.monitor(pid)
     end
   end
 
-  def handle_info({:DOWN, _ref, :process, {_registry, _pid, n}, _reason}, state) do
-    # Clean up ETS tables and broadcast termination
-    :ets.delete(:processes_table, n)
-    Phoenix.PubSub.broadcast(
-      PrimeScaler.PubSub,
-      "primes",
-      {:process_terminated, n}
-    )
+  def handle_info({:DOWN, _ref, :process, pid, _reason}, state) do
+    # Find the number associated with this pid
+    n = :ets.select(:processes_table, [{{:"$1", :_}, [], [:"$1"]}])
+        |> Enum.find(fn num -> 
+          case Registry.lookup(registry_name(), num) do
+            [{^pid, _}] -> true
+            _ -> false
+          end
+        end)
+    
+    if n do
+      :ets.delete(:processes_table, n)
+      Phoenix.PubSub.broadcast(
+        PrimeScaler.PubSub,
+        "primes",
+        {:process_terminated, n}
+      )
+    end
+    
     {:noreply, state}
   end
 
