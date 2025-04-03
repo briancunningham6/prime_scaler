@@ -13,9 +13,18 @@ defmodule PrimeScalerWeb.PrimeLive do
       Phoenix.PubSub.subscribe(PrimeScaler.PubSub, "primes")
     end
 
+    # Get latest state from registry
+    active_processes = PrimeScaler.get_active_processes()
     processes_by_node = PrimeScaler.PrimeRegistry.get_processes_by_node()
     connected_nodes = [node() | PrimeScaler.PrimeRegistry.get_connected_nodes()]
-    active_processes = PrimeScaler.get_active_processes()
+    
+    # Query each active process to verify it's still alive
+    active_processes = Enum.filter(active_processes, fn n -> 
+      case PrimeScaler.PrimeRegistry.lookup(n) do
+        nil -> false
+        pid -> Process.alive?(pid)
+      end
+    end)
 
     {:ok,
      assign(socket,
