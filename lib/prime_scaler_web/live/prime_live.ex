@@ -111,9 +111,9 @@ defmodule PrimeScalerWeb.PrimeLive do
   def handle_event("select_number", %{"number" => number_str}, socket) do
     case Integer.parse(number_str) do
       {n, _} when n > 0 and n <= 10_000 ->
-        # Only proceed if the number isn't already calculated
+        # Only proceed if the number isn't already being calculated or activated
         if !MapSet.member?(socket.assigns.calculating_numbers, n) and 
-           !Enum.member?(socket.assigns.active_processes, n) do
+           !Map.has_key?(socket.assigns.prime_values, n) do
           
           # Add number to calculating set
           calculating_numbers = MapSet.put(socket.assigns.calculating_numbers, n)
