@@ -97,7 +97,7 @@
           <%= for index <- 1..10_000 do %>
             <div 
               id={"cell-#{index}"}
-              class={cell_class(index, @active_processes, @calculating_numbers)} 
+              class={cell_class(index, @active_processes, @calculating_numbers, @processes_by_node)} 
               phx-click="select_number"
               phx-value-number={index}
               phx-update="ignore"

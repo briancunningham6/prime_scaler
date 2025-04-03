@@ -265,15 +265,26 @@ defmodule PrimeScalerWeb.PrimeLive do
   @doc """
   Returns the appropriate class for a grid cell based on its state.
   """
-  def cell_class(index, active_processes, calculating_numbers) do
+  def cell_class(index, active_processes, calculating_numbers, processes_by_node) do
     cond do
       # Cell is being calculated - blue flashing
       index in calculating_numbers -> "grid-cell calculating"
-      # Cell has a process - green
-      index in active_processes -> "grid-cell active"
+      # Cell has a process - different shades of green per node
+      index in active_processes ->
+        case Enum.find(processes_by_node, fn {_node, processes} -> index in processes end) do
+          {node, _} -> "grid-cell active-#{node_to_class(node)}"
+          nil -> "grid-cell active"
+        end
       # Cell is inactive - gray
       true -> "grid-cell inactive"
     end
+  end
+
+  defp node_to_class(node) do
+    node
+    |> Atom.to_string()
+    |> String.replace("@", "-")
+    |> String.replace(".", "-")
   end
 
   @doc """
