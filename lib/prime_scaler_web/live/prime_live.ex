@@ -241,12 +241,12 @@ defmodule PrimeScalerWeb.PrimeLive do
   @doc """
   Returns the appropriate class for a grid cell based on its state.
   """
-  def cell_class(index, active_processes, calculating_numbers) do
+  def cell_class(index, _active_processes, calculating_numbers, prime_values) do
     cond do
       # Cell is being calculated - blue flashing
       MapSet.member?(calculating_numbers, index) -> "grid-cell calculating"
       # Cell has a process - green
-      Map.has_key?(socket.assigns.prime_values, index) -> "grid-cell active"
+      Map.has_key?(prime_values, index) -> "grid-cell active"
       # Cell is inactive - gray
       true -> "grid-cell inactive"
     end
