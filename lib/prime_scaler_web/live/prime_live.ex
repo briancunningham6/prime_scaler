@@ -235,6 +235,21 @@ defmodule PrimeScalerWeb.PrimeLive do
     {:noreply, assign(socket, connected_nodes: connected_nodes)}
   end
 
+  def handle_info(%Phoenix.Socket.Message{event: "kill_process", payload: %{"number" => number_str}}, socket) do
+    case Integer.parse(number_str) do
+      {n, _} when n > 0 and n <= 10_000 ->
+        if pid = PrimeScaler.PrimeRegistry.lookup(n) do
+          Process.exit(pid, :kill)
+          active_processes = List.delete(socket.assigns.active_processes, n)
+          {:noreply, assign(socket, active_processes: active_processes)}
+        else
+          {:noreply, socket}
+        end
+      _ ->
+        {:noreply, socket}
+    end
+  end
+
   # Grid helper functions
 
   @doc """
