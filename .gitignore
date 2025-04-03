@@ -1,6 +1,10 @@
 # The directory Mix will write compiled artifacts to.
 /_build/
+/_build/**/*
 /_build/dev/lib/prime_scaler/ebin/
+/_build/dev/lib/prime_scaler/.mix/
+**/compile.elixir
+**/compile.protocols
 
 # If you run "mix test --cover", coverage assets end up here.
 /cover/
