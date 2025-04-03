@@ -5,17 +5,17 @@ defmodule PrimeScaler.Application do
   @impl true
   def start(_type, _args) do
     children = [
-      # Start the Registry for Prime Calculation Processes
-      {Registry, keys: :unique, name: PrimeScaler.PrimeRegistry.registry_name()},
-      
-      # Start the ETS table owner for prime numbers
-      PrimeScaler.PrimeRegistry,
-      
       # Start the Telemetry supervisor
       PrimeScalerWeb.Telemetry,
       
-      # Start the PubSub system
+      # Start the PubSub system first
       {Phoenix.PubSub, name: PrimeScaler.PubSub},
+      
+      # Start the Registry globally for Prime Calculation Processes
+      {Registry, [keys: :unique, name: PrimeScaler.PrimeRegistry.registry_name(), partitions: System.schedulers_online()]},
+      
+      # Start the ETS table owner for prime numbers
+      PrimeScaler.PrimeRegistry,
       
       # Start the Endpoint (http/https)
       PrimeScalerWeb.Endpoint

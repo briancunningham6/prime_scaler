@@ -1,91 +1,125 @@
-/* Custom styles for PrimeScaler project */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-/* Custom grid styles for process visualization */
-.prime-grid {
-  display: grid;
-  grid-template-columns: repeat(10, minmax(0, 1fr));
-  gap: 0.5rem;
+/* Phoenix LiveView specific classes for loading states */
+.phx-click-loading {
+  opacity: 0.5;
+  transition: opacity 1s ease-out;
 }
 
-.prime-cell {
-  aspect-ratio: 1 / 1;
+.phx-submit-loading {
+  opacity: 0.5;
+  transition: opacity 1s ease-out;
+}
+
+.phx-change-loading {
+  opacity: 0.5;
+  transition: opacity 1s ease-out;
+}
+
+/* Custom styles */
+.grid-container {
+  display: grid;
+  grid-template-columns: repeat(100, 1fr);
+  grid-gap: 1px;
+}
+
+.grid-cell {
+  aspect-ratio: 1/1;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.75rem;
-  font-weight: 600;
-  border-radius: 0.25rem;
-  transition: all 0.3s ease;
-}
-
-.prime-cell.active {
-  background-color: #4ade80; /* Green 400 */
-  color: #064e3b; /* Green 900 */
-}
-
-.prime-cell.idle {
-  background-color: #e5e7eb; /* Gray 200 */
-  color: #6b7280; /* Gray 500 */
-}
-
-/* Custom button styles */
-.btn-primary {
-  background-color: #3b82f6; /* Blue 500 */
-  color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 0.375rem;
-  font-weight: 600;
+  font-size: 0.5rem;
+  border-radius: 1px;
+  min-width: 8px;
+  min-height: 8px;
+  overflow: hidden;
+  position: relative;
   transition: background-color 0.3s ease;
 }
 
-.btn-primary:hover {
-  background-color: #2563eb; /* Blue 600 */
-}
-
-.btn-danger {
-  background-color: #ef4444; /* Red 500 */
+.grid-cell.active {
+  background-color: rgb(34, 197, 94);
   color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 0.375rem;
-  font-weight: 600;
-  transition: background-color 0.3s ease;
 }
 
-.btn-danger:hover {
-  background-color: #dc2626; /* Red 600 */
+/* Node-specific colors */
+.grid-cell.active-nonode-at-localhost {
+  background-color: rgb(34, 197, 94);
 }
 
-/* Form element styling */
-.input-field {
-  border: 1px solid #d1d5db; /* Gray 300 */
-  border-radius: 0.375rem;
-  padding: 0.5rem 0.75rem;
-  width: 100%;
-  transition: border-color 0.3s ease;
+.grid-cell.active-primary {
+  background-color: rgb(236, 72, 153); /* pink */
 }
 
-.input-field:focus {
-  outline: none;
-  border-color: #3b82f6; /* Blue 500 */
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+.grid-cell.active-secondary {
+  background-color: rgb(22, 163, 74); /* green */
 }
 
-/* Performance metrics display */
-.performance-card {
-  background-color: white;
-  border-radius: 0.5rem;
-  padding: 1rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+.grid-cell.active-node3 {
+  background-color: rgb(59, 130, 246); /* blue */
 }
 
-.metric-value {
+.grid-cell.calculating {
+  background-color: rgb(59, 130, 246);
+  color: white;
+  animation: pulse 1.5s infinite;
+}
+
+.grid-cell.inactive {
+  background-color: rgb(241, 245, 249);
+  color: rgb(100, 116, 139);
+}
+
+.grid-cell-tooltip {
+  display: none;
+  position: fixed; /* Changed from absolute to fixed for better positioning */
+  transform: translate(-50%, -100%);
+  margin-top: -10px;
+  padding: 8px 12px;
+  background-color: rgba(0, 0, 0, 0.9);
+  color: white;
+  border-radius: 6px;
+  font-size: 14px;
+  line-height: 1.4;
+  white-space: nowrap;
+  z-index: 9999;
+  pointer-events: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  width: 180px;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.grid-cell:hover .grid-cell-tooltip {
+  display: block;
+  animation: fadeIn 0.3s;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes pulse {
+  0% {
+    background-color: rgb(59, 130, 246);
+  }
+  50% {
+    background-color: rgb(37, 99, 235);
+  }
+  100% {
+    background-color: rgb(59, 130, 246);
+  }
+}
+
+.prime-result {
   font-size: 1.5rem;
-  font-weight: 700;
-  color: #1f2937; /* Gray 800 */
+  font-weight: bold;
 }
 
-.metric-label {
+.calculation-time {
   font-size: 0.875rem;
-  color: #6b7280; /* Gray 500 */
-  margin-top: 0.25rem;
+  font-style: italic;
 }

@@ -1,4 +1,4 @@
-modules = ["elixir"]
+modules = ["elixir", "nodejs-20"]
 
 [nix]
 channel = "stable-24_05"
@@ -50,6 +50,10 @@ waitForPort = 5000
 
 [deployment]
 run = ["sh", "-c", "mix deps.get && mix phx.server"]
+
+[[ports]]
+localPort = 3000
+externalPort = 3000
 
 [[ports]]
 localPort = 5000

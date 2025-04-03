@@ -1,3 +1,4 @@
+
 defmodule PrimeScaler.PrimeServer do
   @moduledoc """
   GenServer responsible for calculating and caching prime numbers.
@@ -14,7 +15,32 @@ defmodule PrimeScaler.PrimeServer do
   Starts a new Prime Server process.
   """
   def start_link(n) when is_integer(n) and n > 0 and n <= 10_000 do
-    GenServer.start_link(__MODULE__, n, name: via_tuple(n))
+    current_node = Node.self()
+    all_nodes = [current_node | Node.list()]
+    
+    # Select target node using round-robin or any other strategy
+    target_node = case all_nodes do
+      [] -> current_node
+      nodes -> Enum.random(nodes)
+    end
+    
+    # Start the GenServer on the target node
+    case :rpc.call(target_node, Process, :whereis, [PrimeRegistry.registry_name()]) do
+      nil ->
+        Logger.error("Registry not found on node #{target_node}")
+        # Fallback to local node
+        GenServer.start_link(__MODULE__, n, name: via_tuple(n))
+      _pid ->
+        case GenServer.start_link(__MODULE__, n, name: via_tuple(n)) do
+          {:ok, pid} ->
+            Logger.info("Started prime server for #{n} on node #{target_node}")
+            {:ok, pid}
+          error ->
+            Logger.error("Failed to start GenServer: #{inspect(error)}")
+            # Fallback to local node
+            GenServer.start_link(__MODULE__, n, name: via_tuple(n))
+        end
+    end
   end
 
   @doc """
@@ -40,7 +66,7 @@ defmodule PrimeScaler.PrimeServer do
   def init(n) do
     # Register this process with the registry
     PrimeRegistry.register_process(n)
-    
+
     # We initially don't calculate the prime number
     # but wait for someone to request it
     {:ok, %{n: n, prime: nil}}
@@ -50,18 +76,31 @@ defmodule PrimeScaler.PrimeServer do
   def handle_call(:get_prime, _from, %{n: n, prime: nil} = state) do
     # Calculate the prime number when first requested
     Logger.info("Calculating #{n}th prime number")
-    prime = PrimeCalculator.calculate_prime(n)
-    
+    prime = case Process.get(:calculation_method, :elixir) do
+      :go ->
+        try do
+          {result, 0} = System.cmd(Path.join(File.cwd!(), "prime_go"), [Integer.to_string(n)])
+          String.to_integer(result)
+        rescue
+          _ ->
+            # Log the failure and fallback to Elixir implementation
+            Logger.warn("Go calculation failed for n=#{n}, falling back to Elixir implementation")
+            PrimeCalculator.calculate_prime(n)
+        end
+      _ ->
+        PrimeCalculator.calculate_prime(n)
+    end
+
     # Store the result in ETS for quick restart recovery
     PrimeRegistry.store_prime(n, prime)
-    
+
     # Broadcast that a new prime has been calculated
     Phoenix.PubSub.broadcast(
       PrimeScaler.PubSub,
       "primes",
       {:prime_calculated, n, prime}
     )
-    
+
     {:reply, prime, %{state | prime: prime}}
   end
 

@@ -13,7 +13,7 @@
       <!-- Form Section -->
       <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
         <h2 class="text-xl font-bold mb-4">Calculate Prime Number</h2>
-        
+
         <form phx-submit="submit">
           <.input
             type="number"
@@ -24,26 +24,38 @@
             max="10000"
             required
           />
-          
+
           <%= if @error do %>
             <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
               <%= @error %>
             </div>
           <% end %>
-          
-          <.button type="submit" class="w-full">
-            <%= if @calculating do %>
-              Calculating...
-            <% else %>
-              Calculate
-            <% end %>
-          </.button>
+
+          <div class="flex gap-4">
+            <.button type="submit" name="method" value="elixir" class="flex-1">
+              <%= if @calculating do %>
+                Calculating...
+              <% else %>
+                Calculate with Elixir
+              <% end %>
+            </.button>
+            <.button type="submit" name="method" value="go" class="flex-1 bg-green-500 hover:bg-green-700">
+              <%= if @calculating do %>
+                Calculating...
+              <% else %>
+                Calculate with Go
+              <% end %>
+            </.button>
+          </div>
         </form>
-        
+
         <%= if @prime_result do %>
           <div class="mt-6 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
             <p class="font-bold">Result:</p>
-            <p>The <%= @n %>th prime number is <%= @prime_result %></p>
+            <p class="prime-result">The <%= @n %>th prime number is <%= @prime_result %></p>
+            <%= if @calculation_time do %>
+              <p class="calculation-time">Calculated in <%= format_calculation_time(@calculation_time) %></p>
+            <% end %>
           </div>
         <% end %>
       </div>
@@ -61,8 +73,9 @@
           <li>If yes, reuse the existing process to get the result immediately</li>
         </ol>
         <p class="mb-4">
-          The grid below shows all active processes. Each blue cell represents a number that has been calculated
-          and has a dedicated Elixir process.
+          The grid below shows all active processes. Blue cells indicate numbers being calculated right now. 
+          Green cells represent numbers that have been calculated and have a dedicated Elixir process.
+          Hover over any cell to see details and the calculated prime value.
         </p>
         <p>
           <strong>Active Processes:</strong> <%= length(@active_processes) %>
@@ -74,16 +87,67 @@
     <div class="bg-white shadow-md rounded p-6 mb-4 overflow-auto">
       <h2 class="text-xl font-bold mb-4">Process Visualization</h2>
       <p class="mb-4">
-        Each cell below represents an integer from 1 to 10,000. Blue cells indicate active Elixir processes
-        calculating or caching prime numbers.
+        Each cell below represents an integer from 1 to 10,000. Blue flashing cells are being calculated now.
+        Green cells indicate finished calculations with active Elixir processes caching the results.
+        Hover over any cell to see the prime number value if it has been calculated.
       </p>
-      
-      <div class="grid-container overflow-auto max-h-96">
-        <div class="flex flex-wrap" style="width: 500px">
+
+      <div class="overflow-auto max-h-96">
+        <div class="grid-container" id="tooltip-container" phx-hook="TooltipHandler">
           <%= for index <- 1..10_000 do %>
-            <div class={cell_class(index, @active_processes)} title={"Number: #{index}"}>
+            <div 
+              id={"cell-#{index}"}
+              class={cell_class(index, @active_processes, @calculating_numbers, @processes_by_node)} 
+              phx-click={if index in @active_processes, do: "kill_process", else: "select_number"}
+              phx-value-number={index}
+              phx-update="ignore"
+              data-context-menu="true"
+            >
+              <div class="grid-cell-tooltip">
+                <%= if Map.has_key?(@prime_values, index) do %>
+                  <strong>Number:</strong> <%= index %><br>
+                  <strong>Prime:</strong> <%= @prime_values[index] %>
+                <% else %>
+                  <strong>Number:</strong> <%= index %><br>
+                  <em>Click to calculate</em>
+                <% end %>
+              </div>
+              &nbsp;
             </div>
           <% end %>
+        </div>
+      </div>
+
+      <!-- Grid Legend and Information -->
+      <div class="mt-4 flex flex-wrap gap-4">
+        <div class="flex items-center">
+          <div class="w-4 h-4 bg-blue-500 rounded mr-2"></div>
+          <span>Calculating</span>
+        </div>
+        <div class="flex items-center">
+          <div class="w-4 h-4 bg-green-500 rounded mr-2"></div>
+          <span>Active Process</span>
+        </div>
+        <div class="flex items-center">
+          <div class="w-4 h-4 bg-slate-100 rounded mr-2"></div>
+          <span>Inactive</span>
+        </div>
+        <div>
+          <span class="font-semibold">Tip:</span> Click on a cell to calculate that specific number. Hover to see prime values.
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-4 p-4">
+        <div class="bg-white rounded-lg shadow p-4 mb-4">
+          <h2 class="text-lg font-semibold mb-2">Node Status</h2>
+          <div class="grid grid-cols-2 gap-4">
+            <%= for node <- @connected_nodes do %>
+              <div class="bg-gray-50 p-3 rounded">
+                <div class="font-medium"><%= node %></div>
+                <div class="text-sm text-gray-600"><%= Map.get(@processes_by_node, node, 0) %> processes</div>
+              </div>
+            <% end %>
+          </div>
         </div>
       </div>
     </div>

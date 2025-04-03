@@ -22,12 +22,19 @@ defmodule PrimeScalerWeb.Endpoint do
     from: :prime_scaler,
     gzip: false,
     only: PrimeScalerWeb.static_paths()
+    
+  # Explicitly serve static asset files from the assets directory
+  plug Plug.Static,
+    at: "/assets",
+    from: {:prime_scaler, "assets"},
+    gzip: false
 
   # Code reloading can be explicitly enabled under the
   # :code_reloader configuration of your endpoint.
   if code_reloading? do
-    socket "/phoenix/live_reload/socket", Phoenix.LiveReloader.Socket
-    plug Phoenix.LiveReloader
+    # Disabling LiveReloader to avoid startup issues
+    # socket "/phoenix/live_reload/socket", Phoenix.LiveReloader.Socket
+    # plug Phoenix.LiveReloader
     plug Phoenix.CodeReloader
   end
 

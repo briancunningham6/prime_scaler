@@ -6,57 +6,10 @@
     <meta name="csrf-token" content={get_csrf_token()} />
     <title>PrimeScaler · Educational Elixir Application</title>
     
-    <!-- Tailwind CDN that works reliably -->
-    <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
+    <!-- Load TailwindCSS from local build -->
+    <link phx-track-static rel="stylesheet" href={~p"/assets/app.css"}/>
     
-    <!-- Custom styles -->
-    <style>
-      /* Custom grid styles for process visualization */
-      .prime-grid {
-        display: grid;
-        grid-template-columns: repeat(10, minmax(0, 1fr));
-        gap: 0.5rem;
-      }
-      
-      .prime-cell {
-        aspect-ratio: 1 / 1;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.75rem;
-        font-weight: 600;
-        border-radius: 0.25rem;
-        transition: all 0.3s ease;
-      }
-      
-      .prime-cell.active {
-        background-color: #4ade80; /* Green 400 */
-        color: #064e3b; /* Green 900 */
-      }
-      
-      .prime-cell.idle {
-        background-color: #e5e7eb; /* Gray 200 */
-        color: #6b7280; /* Gray 500 */
-      }
-      
-      /* Grid container */
-      .grid-container {
-        overflow: auto;
-        max-height: 24rem;
-      }
-    </style>
-    
-    <!-- Phoenix dependencies - using unpkg CDN which is more reliable -->
-    <script src="https://unpkg.com/phoenix@1.7.7/priv/static/phoenix.min.js"></script>
-    <script src="https://unpkg.com/phoenix_live_view@0.19.0/priv/static/phoenix_live_view.min.js"></script>
-    
-    <!-- Ensure Phoenix and LiveView are properly initialized -->
-    <script>
-      window.Phoenix = window.Phoenix || {};
-      window.phoenix_live_view = window.phoenix_live_view || {};
-    </script>
-    
-    <!-- Application JS -->
+    <!-- Load Phoenix JS from local build -->
     <script defer phx-track-static type="text/javascript" src={~p"/assets/app.js"}></script>
   </head>
   <body class="h-full bg-gray-100">
