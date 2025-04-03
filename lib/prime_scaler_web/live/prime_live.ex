@@ -303,7 +303,7 @@ defmodule PrimeScalerWeb.PrimeLive do
     cond do
       # Cell is being calculated - blue flashing
       index in calculating_numbers -> "grid-cell calculating"
-      # Cell has a process - different shades of green per node
+      # Cell has a process - different colors per node
       index in active_processes ->
         node = get_node_for_process(index, processes_by_node)
         case node do
@@ -316,8 +316,8 @@ defmodule PrimeScalerWeb.PrimeLive do
   end
 
   defp get_node_for_process(index, processes_by_node) do
-    Enum.find_value(processes_by_node, fn {node, count} ->
-      if is_integer(count), do: nil, else: if(index in count, do: node, else: nil)
+    Enum.find_value(processes_by_node, fn {node, process_list} ->
+      if index in process_list, do: node, else: nil
     end)
   end
 

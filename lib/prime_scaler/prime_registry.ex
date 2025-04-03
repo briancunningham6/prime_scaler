@@ -39,22 +39,18 @@ defmodule PrimeScaler.PrimeRegistry do
   end
 
   def get_processes_by_node do
-    # Get all nodes including self
-    all_nodes = [node() | Node.list()]
-    base_counts = Map.new(all_nodes, fn node -> {node, 0} end)
-    
-    # Query each node for its local processes
-    process_counts = Enum.reduce(all_nodes, %{}, fn target_node, acc ->
-      case :rpc.call(target_node, Registry, :select, [registry_name(), [{{:_, :"$1", :_}, [], [:"$1"]}]]) do
-        {:badrpc, _} -> 
-          Map.put(acc, target_node, 0)
-        processes when is_list(processes) ->
-          Map.put(acc, target_node, length(processes))
-      end
-    end)
-    
-    # Merge with base counts to ensure all nodes are represented
-    Map.merge(base_counts, process_counts)
+    # Get all processes from the ETS table with their nodes
+    case :ets.tab2list(:processes_table) do
+      [] -> %{}
+      processes ->
+        # Group processes by node
+        processes
+        |> Enum.group_by(
+          fn {_n, node} -> node end,
+          fn {n, _node} -> n end
+        )
+        |> Map.new()
+    end
   end
 
   def get_connected_nodes do
