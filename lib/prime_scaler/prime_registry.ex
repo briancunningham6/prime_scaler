@@ -23,7 +23,14 @@ defmodule PrimeScaler.PrimeRegistry do
   end
 
   def get_active_processes do
+    # Get all processes from the registry and filter only those that are alive
     Registry.select(registry_name(), [{{:_, :"$1", :_}, [], [:"$1"]}])
+    |> Enum.filter(fn n ->
+      case Registry.lookup(registry_name(), n) do
+        [{pid, _}] -> Process.alive?(pid)
+        [] -> false
+      end
+    end)
   end
 
   def get_processes_by_node do
