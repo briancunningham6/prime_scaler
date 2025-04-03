@@ -76,17 +76,17 @@ defmodule PrimeScaler.PrimeRegistry do
     
     # Monitor the process for termination
     if pid = lookup(n) do
-      Process.monitor(pid)
+      Process.monitor({:via, Registry, {registry_name(), n}})
     end
   end
 
-  def handle_info({:DOWN, _ref, :process, _pid, _reason}, state) do
+  def handle_info({:DOWN, _ref, :process, {_registry, _pid, n}, _reason}, state) do
     # Clean up ETS tables and broadcast termination
-    :ets.delete(:processes_table, state.n)
+    :ets.delete(:processes_table, n)
     Phoenix.PubSub.broadcast(
       PrimeScaler.PubSub,
       "primes",
-      {:process_terminated, state.n}
+      {:process_terminated, n}
     )
     {:noreply, state}
   end
