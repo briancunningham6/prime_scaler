@@ -144,7 +144,7 @@
             <%= for node <- @connected_nodes do %>
               <div class="bg-gray-50 p-3 rounded">
                 <div class="font-medium"><%= node %></div>
-                <div class="text-sm text-gray-600"><%= Map.get(@processes_by_node, node, 0) %> processes</div>
+                <div class="text-sm text-gray-600"><%= "#{Map.get(@processes_by_node, node, 0)}" %> processes</div>
               </div>
             <% end %>
           </div>
