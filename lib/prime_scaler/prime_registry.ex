@@ -57,8 +57,17 @@ defmodule PrimeScaler.PrimeRegistry do
   end
 
   def register_process(n) do
+    current_node = node()
+    :ets.insert(:processes_table, {n, current_node})
     # Register the process in the registry and update node counts
     GenServer.cast(__MODULE__, {:register_process, n})
+  end
+
+  def get_active_processes do
+    case :ets.tab2list(:processes_table) do
+      [] -> []
+      processes -> Enum.map(processes, fn {n, _node} -> n end)
+    end
   end
 
   @impl true
@@ -66,16 +75,23 @@ defmodule PrimeScaler.PrimeRegistry do
     # Monitor node connections/disconnections
     :net_kernel.monitor_nodes(true)
 
-    # Create an ETS table to store prime numbers
+    # Create an ETS table to store prime numbers and process state
     table = :ets.new(@table_name, [:set, :named_table, :public, read_concurrency: true])
+    process_table = :ets.new(:processes_table, [:set, :named_table, :public])
 
-    # Initialize the state with an empty set of active processes and node tracking
-    state = %{active_processes: MapSet.new(), table: table, processes_by_node: %{}}
+    # Initialize the state with process tracking
+    state = %{table: table, process_table: process_table, processes_by_node: %{}}
     
     # Broadcast initial node status including self
     broadcast_node_status()
     
     {:ok, state}
+  end
+
+  def reset_system do
+    :ets.delete_all_objects(@table_name)
+    :ets.delete_all_objects(:processes_table)
+    Phoenix.PubSub.broadcast(PrimeScaler.PubSub, "primes", :system_reset)
   end
 
   @impl true
