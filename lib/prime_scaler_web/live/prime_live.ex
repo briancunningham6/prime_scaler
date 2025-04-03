@@ -323,11 +323,14 @@ defmodule PrimeScalerWeb.PrimeLive do
 
   defp node_to_class(node) do
     node_str = Atom.to_string(node)
-    cond do
+    class = cond do
       String.contains?(node_str, "primary@") -> "primary"
       String.contains?(node_str, "secondary@") -> "secondary"
-      true -> node_str |> String.replace("@", "-") |> String.replace(".", "-")
+      String.contains?(node_str, "tertiary@") -> "tertiary"
+      String.contains?(node_str, "quaternary@") -> "quaternary"
+      true -> "node"
     end
+    "#{class}"
   end
 
   @doc """
