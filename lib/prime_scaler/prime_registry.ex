@@ -27,28 +27,27 @@ defmodule PrimeScaler.PrimeRegistry do
   end
 
   def get_processes_by_node do
-    processes = Registry.select(registry_name(), [{{:_, :"$1", :"$2"}, [], [{{:"$1", :"$2"}}]}])
+    processes = Registry.select(registry_name(), [{{:_, :"$1", :_}, [], [:"$1"]}])
     
     # Get all nodes including self
     all_nodes = [node() | Node.list()]
-    
-    # Initialize counts for all nodes
     base_counts = Map.new(all_nodes, fn node -> {node, 0} end)
     
-    # Count processes by their actual running node
+    # Group processes by their actual running node
     process_counts = processes
     |> Enum.group_by(
-      fn {pid, _} -> 
+      fn pid -> 
         try do
-          # Get the actual node where the process is running
-          Process.whereis(pid) && :rpc.call(node(pid), Process, :alive?, [pid]) && node(pid) || node()
+          case :global.whereis_name({__MODULE__, pid}) do
+            :undefined -> node()
+            actual_pid -> node(actual_pid)
+          end
         rescue
           _ -> node()
         end
-      end,
-      fn {_pid, _} -> 1 end
+      end
     )
-    |> Map.new(fn {node, list} -> {node, Enum.sum(list)} end)
+    |> Map.new(fn {node, pids} -> {node, length(pids)} end)
     
     # Merge with base counts to ensure all nodes are represented
     Map.merge(base_counts, process_counts)
