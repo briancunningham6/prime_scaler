@@ -303,7 +303,7 @@ defmodule PrimeScalerWeb.PrimeLive do
     cond do
       # Cell is being calculated - blue flashing
       index in calculating_numbers -> "grid-cell calculating"
-      # Cell has a process - different colors per node
+      # Cell has a process - different shades of green per node
       index in active_processes ->
         node = get_node_for_process(index, processes_by_node)
         case node do
@@ -316,21 +316,18 @@ defmodule PrimeScalerWeb.PrimeLive do
   end
 
   defp get_node_for_process(index, processes_by_node) do
-    Enum.find_value(processes_by_node, fn {node, process_list} ->
-      if index in process_list, do: node, else: nil
+    Enum.find_value(processes_by_node, fn {node, count} ->
+      if is_integer(count), do: nil, else: if(index in count, do: node, else: nil)
     end)
   end
 
   defp node_to_class(node) do
     node_str = Atom.to_string(node)
-    class = cond do
+    cond do
       String.contains?(node_str, "primary@") -> "primary"
       String.contains?(node_str, "secondary@") -> "secondary"
-      String.contains?(node_str, "tertiary@") -> "tertiary"
-      String.contains?(node_str, "quaternary@") -> "quaternary"
-      true -> "node"
+      true -> node_str |> String.replace("@", "-") |> String.replace(".", "-")
     end
-    "#{class}"
   end
 
   @doc """
