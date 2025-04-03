@@ -107,9 +107,11 @@ defmodule PrimeScalerWeb.PrimeLive do
   def handle_event("kill_process", %{"number" => number_str}, socket) do
     case Integer.parse(number_str) do
       {n, _} when n > 0 and n <= 10_000 ->
-        if pid = PrimeRegistry.lookup(n) do
+        if pid = PrimeScaler.PrimeRegistry.lookup(n) do
           Process.exit(pid, :kill)
-          {:noreply, socket}
+          # Remove the process from active processes
+          active_processes = List.delete(socket.assigns.active_processes, n)
+          {:noreply, assign(socket, active_processes: active_processes)}
         else
           {:noreply, socket}
         end
