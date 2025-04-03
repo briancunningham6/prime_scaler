@@ -241,7 +241,8 @@ defmodule PrimeScalerWeb.PrimeLive do
         if pid = PrimeScaler.PrimeRegistry.lookup(n) do
           Process.exit(pid, :kill)
           active_processes = List.delete(socket.assigns.active_processes, n)
-          {:noreply, assign(socket, active_processes: active_processes)}
+          prime_values = Map.delete(socket.assigns.prime_values, n)
+          {:noreply, assign(socket, active_processes: active_processes, prime_values: prime_values)}
         else
           {:noreply, socket}
         end
