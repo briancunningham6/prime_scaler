@@ -288,10 +288,12 @@ defmodule PrimeScalerWeb.PrimeLive do
   end
 
   defp node_to_class(node) do
-    node
-    |> Atom.to_string()
-    |> String.replace("@", "-")
-    |> String.replace(".", "-")
+    node_str = Atom.to_string(node)
+    cond do
+      String.contains?(node_str, "primary@") -> "primary"
+      String.contains?(node_str, "secondary@") -> "secondary"
+      true -> node_str |> String.replace("@", "-") |> String.replace(".", "-")
+    end
   end
 
   @doc """
