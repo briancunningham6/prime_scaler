@@ -73,6 +73,22 @@ defmodule PrimeScaler.PrimeRegistry do
     :ets.insert(:processes_table, {n, current_node})
     # Register the process in the registry and update node counts
     GenServer.cast(__MODULE__, {:register_process, n})
+    
+    # Monitor the process for termination
+    if pid = lookup(n) do
+      Process.monitor(pid)
+    end
+  end
+
+  def handle_info({:DOWN, _ref, :process, _pid, _reason}, state) do
+    # Clean up ETS tables and broadcast termination
+    :ets.delete(:processes_table, state.n)
+    Phoenix.PubSub.broadcast(
+      PrimeScaler.PubSub,
+      "primes",
+      {:process_terminated, state.n}
+    )
+    {:noreply, state}
   end
 
   @impl true

@@ -235,6 +235,17 @@ defmodule PrimeScalerWeb.PrimeLive do
     {:noreply, assign(socket, connected_nodes: connected_nodes)}
   end
 
+  def handle_info({:process_terminated, n}, socket) do
+    active_processes = List.delete(socket.assigns.active_processes, n)
+    prime_values = Map.delete(socket.assigns.prime_values, n)
+    processes_by_node = PrimeScaler.PrimeRegistry.get_processes_by_node()
+    {:noreply, assign(socket, 
+      active_processes: active_processes,
+      prime_values: prime_values,
+      processes_by_node: processes_by_node
+    )}
+  end
+
   def handle_info(%{event: "kill_process", payload: %{"number" => number_str}}, socket) do
     case Integer.parse(number_str) do
       {n, _} when n > 0 and n <= 10_000 ->
