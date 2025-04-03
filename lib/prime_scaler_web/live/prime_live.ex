@@ -150,10 +150,11 @@ defmodule PrimeScalerWeb.PrimeLive do
 
   @impl true
   def handle_info({:prime_calculated, n, result, calculation_time}, socket) do
-    # Only update the state related to this specific calculation
+    # Add to active processes and prime values, remove from calculating
     socket =
       socket
       |> assign(
+        active_processes: [n | socket.assigns.active_processes],
         calculating_numbers: MapSet.delete(socket.assigns.calculating_numbers, n),
         prime_values: Map.put(socket.assigns.prime_values, n, result)
       )
@@ -164,10 +165,11 @@ defmodule PrimeScalerWeb.PrimeLive do
   # For backward compatibility with any existing processes
   @impl true
   def handle_info({:prime_calculated, n, result}, socket) do
-    # Only update the state related to this specific calculation
+    # Add to active processes and prime values, remove from calculating
     socket =
       socket
       |> assign(
+        active_processes: [n | socket.assigns.active_processes],
         calculating_numbers: MapSet.delete(socket.assigns.calculating_numbers, n),
         prime_values: Map.put(socket.assigns.prime_values, n, result)
       )
