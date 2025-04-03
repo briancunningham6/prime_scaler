@@ -28,18 +28,30 @@ defmodule PrimeScaler.PrimeRegistry do
 
   def get_processes_by_node do
     processes = Registry.select(registry_name(), [{{:_, :"$1", :"$2"}, [], [{{:"$1", :"$2"}}]}])
-    processes
+    
+    # Get all nodes including self
+    all_nodes = [node() | Node.list()]
+    
+    # Initialize counts for all nodes
+    base_counts = Map.new(all_nodes, fn node -> {node, 0} end)
+    
+    # Count processes by their actual running node
+    process_counts = processes
     |> Enum.group_by(
       fn {pid, _} -> 
         try do
-          node(pid)
+          # Get the actual node where the process is running
+          Process.whereis(pid) && :rpc.call(node(pid), Process, :alive?, [pid]) && node(pid) || node()
         rescue
           _ -> node()
         end
       end,
-      fn {_pid, n} -> n end
+      fn {_pid, _} -> 1 end
     )
-    |> Map.new(fn {node, nums} -> {node, length(nums)} end)
+    |> Map.new(fn {node, list} -> {node, Enum.sum(list)} end)
+    
+    # Merge with base counts to ensure all nodes are represented
+    Map.merge(base_counts, process_counts)
   end
 
   def get_connected_nodes do
