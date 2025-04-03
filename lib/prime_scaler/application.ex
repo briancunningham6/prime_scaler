@@ -11,8 +11,8 @@ defmodule PrimeScaler.Application do
       # Start the PubSub system first
       {Phoenix.PubSub, name: PrimeScaler.PubSub},
       
-      # Start the Registry for Prime Calculation Processes
-      {Registry, keys: :unique, name: PrimeScaler.PrimeRegistry.registry_name()},
+      # Start the Registry globally for Prime Calculation Processes
+      {Registry, [keys: :unique, name: PrimeScaler.PrimeRegistry.registry_name(), partitions: System.schedulers_online()]},
       
       # Start the ETS table owner for prime numbers
       PrimeScaler.PrimeRegistry,

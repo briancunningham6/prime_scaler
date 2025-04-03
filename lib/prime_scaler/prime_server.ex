@@ -23,9 +23,23 @@ defmodule PrimeScaler.PrimeServer do
       nodes -> Enum.random(nodes)
     end
     
-    # Start the GenServer on the target node with proper registration
-    case :rpc.call(target_node, GenServer, :start_link, 
-      [__MODULE__, n, [name: {:via, Registry, {PrimeRegistry.registry_name(), n}}]]) do
+    # Start the GenServer on the target node
+    case :rpc.call(target_node, Process, :whereis, [PrimeRegistry.registry_name()]) do
+      nil ->
+        Logger.error("Registry not found on node #{target_node}")
+        # Fallback to local node
+        GenServer.start_link(__MODULE__, n, name: via_tuple(n))
+      _pid ->
+        case GenServer.start_link(__MODULE__, n, name: via_tuple(n)) do
+          {:ok, pid} ->
+            Logger.info("Started prime server for #{n} on node #{target_node}")
+            {:ok, pid}
+          error ->
+            Logger.error("Failed to start GenServer: #{inspect(error)}")
+            # Fallback to local node
+            GenServer.start_link(__MODULE__, n, name: via_tuple(n))
+        end
+    end
       {:ok, pid} ->
         Logger.info("Started prime server for #{n} on node #{target_node}")
         {:ok, pid}
