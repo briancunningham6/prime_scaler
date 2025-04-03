@@ -109,38 +109,39 @@ defmodule PrimeScalerWeb.PrimeLive do
   end
 
   def handle_event("select_number", %{"number" => number_str}, socket) do
-    # Parse the number from the grid cell
     case Integer.parse(number_str) do
       {n, _} when n > 0 and n <= 10_000 ->
-        # Add number to calculating set
-        calculating_numbers = MapSet.put(socket.assigns.calculating_numbers, n)
-        
-        socket = 
-          socket
-          |> assign(
-            error: nil, 
-            calculating: true, 
-            n: n, 
-            calculation_time: nil, 
-            prime_result: nil,
-            calculating_numbers: calculating_numbers
-          )
+        # Only proceed if the number isn't already calculated
+        if !MapSet.member?(socket.assigns.calculating_numbers, n) and 
+           !Enum.member?(socket.assigns.active_processes, n) do
+          
+          # Add number to calculating set
+          calculating_numbers = MapSet.put(socket.assigns.calculating_numbers, n)
+          
+          socket = 
+            socket
+            |> assign(
+              error: nil,
+              calculating_numbers: calculating_numbers
+            )
 
-        # Get the LiveView PID
-        pid = self()
+          # Get the LiveView PID
+          pid = self()
 
-        # Spawn a task to calculate the prime number
-        Task.start(fn ->
-          start_time = System.monotonic_time(:millisecond)
-          result = PrimeServer.get_prime(n)
-          end_time = System.monotonic_time(:millisecond)
-          calculation_time = end_time - start_time
+          # Spawn a task to calculate the prime number
+          Task.start(fn ->
+            start_time = System.monotonic_time(:millisecond)
+            result = PrimeServer.get_prime(n)
+            end_time = System.monotonic_time(:millisecond)
+            calculation_time = end_time - start_time
 
-          # Send message to the LiveView process
-          send(pid, {:prime_calculated, n, result, calculation_time})
-        end)
+            send(pid, {:prime_calculated, n, result, calculation_time})
+          end)
 
-        {:noreply, socket}
+          {:noreply, socket}
+        else
+          {:noreply, socket}
+        end
 
       _ ->
         {:noreply, socket}

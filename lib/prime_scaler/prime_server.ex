@@ -18,27 +18,32 @@ defmodule PrimeScaler.PrimeServer do
     current_node = Node.self()
     all_nodes = [current_node | Node.list()]
     
-    # Select target node using round-robin or any other strategy
+    # Select target node using round-robin
     target_node = case all_nodes do
       [] -> current_node
       nodes -> Enum.random(nodes)
     end
     
     # Start the GenServer on the target node
-    case :rpc.call(target_node, Process, :whereis, [PrimeRegistry.registry_name()]) do
-      nil ->
-        Logger.error("Registry not found on node #{target_node}")
+    case :rpc.call(target_node, GenServer, :start_link, 
+      [__MODULE__, n, [name: via_tuple(n)]], 5000) do
+      {:ok, pid} ->
+        Logger.info("Started prime server for #{n} on node #{target_node}")
+        # Register the process with the registry
+        :rpc.call(target_node, PrimeRegistry, :register_process, [n])
+        {:ok, pid}
+      {:error, {:already_started, pid}} ->
+        Logger.info("Process for #{n} already exists")
+        {:ok, pid}
+      error ->
+        Logger.error("Failed to start GenServer on #{target_node}: #{inspect(error)}")
         # Fallback to local node
-        GenServer.start_link(__MODULE__, n, name: via_tuple(n))
-      _pid ->
         case GenServer.start_link(__MODULE__, n, name: via_tuple(n)) do
-          {:ok, pid} ->
-            Logger.info("Started prime server for #{n} on node #{target_node}")
-            {:ok, pid}
+          {:ok, pid} = result ->
+            PrimeRegistry.register_process(n)
+            result
           error ->
-            Logger.error("Failed to start GenServer: #{inspect(error)}")
-            # Fallback to local node
-            GenServer.start_link(__MODULE__, n, name: via_tuple(n))
+            error
         end
     end
   end
