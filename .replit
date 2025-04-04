@@ -48,6 +48,15 @@ task = "shell.exec"
 args = "cd . && mix phx.server"
 waitForPort = 5000
 
+[[workflows.workflow]]
+name = "Run Tests"
+author = 38804915
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "mix test"
+
 [deployment]
 run = ["sh", "-c", "mix deps.get && mix phx.server"]
 
