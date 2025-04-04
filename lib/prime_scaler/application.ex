@@ -5,9 +5,6 @@ defmodule PrimeScaler.Application do
   @impl true
   def start(_type, _args) do
     children = [
-      # Start the Telemetry supervisor
-      PrimeScalerWeb.Telemetry,
-      
       # Start the PubSub system first
       {Phoenix.PubSub, name: PrimeScaler.PubSub},
       
@@ -15,11 +12,18 @@ defmodule PrimeScaler.Application do
       {Registry, [keys: :unique, name: PrimeScaler.PrimeRegistry.registry_name(), partitions: System.schedulers_online()]},
       
       # Start the ETS table owner for prime numbers
-      PrimeScaler.PrimeRegistry,
-      
-      # Start the Endpoint (http/https)
-      PrimeScalerWeb.Endpoint
+      PrimeScaler.PrimeRegistry
     ]
+
+    # Only add web-related children if not in compute-only mode
+    children = if Application.get_env(:prime_scaler, :distribution)[:computation_only] do
+      children
+    else
+      children ++ [
+        PrimeScalerWeb.Telemetry,
+        PrimeScalerWeb.Endpoint
+      ]
+    end
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options

@@ -1,9 +1,11 @@
 
 import Config
 
-# Disable the web interface
+# Completely disable the web interface
 config :prime_scaler, PrimeScalerWeb.Endpoint,
-  server: false
+  server: false,
+  http: false,
+  enabled: false
 
 # Enable distributed computation
 config :prime_scaler, :distribution,
