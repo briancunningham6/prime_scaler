@@ -15,11 +15,11 @@ tmux send-keys -t prime_scaler:0 "iex --name primary@127.0.0.1 --cookie prime_sc
 
 # Create and start compute node 1
 tmux new-window -t prime_scaler:1
-tmux send-keys -t prime_scaler:1 "iex --name compute1@127.0.0.1 --cookie prime_scaler -S mix run start_compute_node.exs" C-m
+tmux send-keys -t prime_scaler:1 "MIX_ENV=compute iex --name compute1@127.0.0.1 --cookie prime_scaler -S mix run start_compute_node.exs" C-m
 
 # Create and start compute node 2
 tmux new-window -t prime_scaler:2
-tmux send-keys -t prime_scaler:2 "iex --name compute2@127.0.0.1 --cookie prime_scaler -S mix run start_compute_node.exs" C-m
+tmux send-keys -t prime_scaler:2 "MIX_ENV=compute iex --name compute2@127.0.0.1 --cookie prime_scaler -S mix run start_compute_node.exs" C-m
 
 # Attach to the tmux session
 tmux attach-session -t prime_scaler
