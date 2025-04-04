@@ -2,13 +2,13 @@
 # Configure the application for compute-only mode
 Application.put_env(:prime_scaler, :distribution, enabled: true, computation_only: true)
 
-# Completely disable the web endpoint
-Application.put_env(:prime_scaler, PrimeScalerWeb.Endpoint,
-  server: false,
-  http: false,
-  enabled: false,
-  start_server: false
-)
+# Ensure web endpoint is not started for compute nodes
+Application.put_env(:phoenix, :serve_endpoints, false)
+Application.delete_env(:prime_scaler, PrimeScalerWeb.Endpoint)
+
+# Only start required applications
+Application.load(:prime_scaler)
+Application.delete_env(:prime_scaler, PrimeScalerWeb.Endpoint)
 
 # Start only required applications
 Application.ensure_all_started(:logger)
