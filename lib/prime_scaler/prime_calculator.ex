@@ -14,7 +14,10 @@ defmodule PrimeScaler.PrimeCalculator do
       iex> PrimeScaler.PrimeCalculator.calculate_prime(10)
       29
   """
-  def calculate_prime(n) when is_integer(n) and n > 0 do
+  def calculate_prime(n) when is_integer(n) do
+    if n <= 0 do
+      raise ArgumentError, "n must be greater than 0"
+    end
     find_nth_prime(n, 2, 1)
   end
 
