@@ -5,75 +5,6 @@ on:
   pull_request:
     branches: [ prod ]
 jobs:
-  # Standard x86_64 build for regular Linux/Windows
-  build-x86:
-    name: Build for x86_64
-    runs-on: ubuntu-latest
-    
-    env:
-      MIX_ENV: prod
-      
-    steps:
-    - uses: actions/checkout@v3
-    
-    - name: Set up Elixir
-      uses: erlef/setup-beam@v1
-      with:
-        elixir-version: '1.15.4'
-        otp-version: '26.0'
-    
-    - name: Cache dependencies
-      uses: actions/cache@v3
-      with:
-        path: |
-          deps
-          _build
-        key: ${{ runner.os }}-mix-${{ hashFiles('**/mix.lock') }}
-        restore-keys: ${{ runner.os }}-mix-
-    
-    - name: Install dependencies
-      run: mix deps.get --only prod
-    
-    - name: Compile
-      run: mix compile
-      
-    - name: Run tests
-      run: mix test
-      
-    - name: Install frontend dependencies
-      run: |
-        cd assets
-        # Use npm install instead of npm ci to handle missing package-lock.json
-        npm install
-        
-    - name: Build assets
-      run: mix assets.deploy
-
-    - name: Generate secret key base
-      run: |
-        SECRET_KEY=$(mix phx.gen.secret)
-        echo "SECRET_KEY_BASE=${SECRET_KEY}" >> $GITHUB_ENV  
-        
-    - name: Create release
-      run: |
-        mix phx.gen.release
-        mix release --overwrite
-        
-    - name: Package release
-      id: package
-      run: |
-        mkdir -p releases
-        VERSION=$(grep 'version:' mix.exs | sed -E 's/.*version: "([^"]+)".*/\1/')
-        RELEASE_NAME="prime_scaler-${VERSION}-linux-x86_64.zip"
-        zip -r "releases/${RELEASE_NAME}" _build/prod/rel/prime_scaler
-        echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
-        
-    - name: Upload x86_64 release
-      uses: actions/upload-artifact@v4
-      with:
-        name: release-x86_64
-        path: releases/*.zip
-        retention-days: 5
   # Apple Silicon (M1) build
   build-m1:
     name: Build for Apple Silicon (M1)
@@ -113,6 +44,11 @@ jobs:
         
     - name: Build assets
       run: mix assets.deploy
+
+    - name: Generate secret key base
+      run: |
+        SECRET_KEY=$(mix phx.gen.secret)
+        echo "SECRET_KEY_BASE=${SECRET_KEY}" >> $GITHUB_ENV  
         
     - name: Create release
       run: |
