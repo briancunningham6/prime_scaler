@@ -48,6 +48,11 @@ jobs:
         
     - name: Build assets
       run: mix assets.deploy
+
+    - name: Generate secret key base
+      run: |
+        SECRET_KEY=$(mix phx.gen.secret)
+        echo "SECRET_KEY_BASE=${SECRET_KEY}" >> $GITHUB_ENV  
         
     - name: Create release
       run: |
