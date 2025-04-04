@@ -362,6 +362,26 @@ If you only want to run the computational part on a secondary macOS machine that
    end
    ```
 
+
+
+## Continuous Integration & Deployment
+This project uses GitHub Actions for continuous integration and deployment:
+1. Every push to the `prod` branch triggers the CI/CD pipeline
+2. The pipeline:
+   - Builds the application
+   - Runs all tests
+   - Performs static code analysis with Credo
+   - Creates a production release
+   - Packages the release as a ZIP file
+   - Creates a GitHub Release with the ZIP file as an attachment
+### Downloading Releases
+The latest release can be downloaded from the [Releases page](https://github.com/your-username/prime_scaler/releases).
+### Manual Release Building
+To build a release locally:
+```bash
+# From the project root
+./scripts/build_release.sh
+
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
