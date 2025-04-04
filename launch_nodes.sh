@@ -32,14 +32,14 @@ PRIMARY_PID=$!
 # Wait for primary node to be ready
 wait_for_node "primary"
 
-# Start two secondary nodes
-echo "Starting secondary node 1..."
-iex --name secondary1@192.168.64.1 --cookie prime_scaler -S mix phx.server --eval "Node.connect(:'primary@192.168.64.1')" &
-SECONDARY1_PID=$!
+# Start two compute-only nodes
+echo "Starting compute node 1..."
+iex --name compute1@192.168.64.1 --cookie prime_scaler -S mix run start_compute_node.exs &
+COMPUTE1_PID=$!
 
-echo "Starting secondary node 2..."
-iex --name secondary2@192.168.64.1 --cookie prime_scaler -S mix phx.server --eval "Node.connect(:'primary@192.168.64.1')" &
-SECONDARY2_PID=$!
+echo "Starting compute node 2..."
+iex --name compute2@192.168.64.1 --cookie prime_scaler -S mix run start_compute_node.exs &
+COMPUTE2_PID=$!
 
 # Wait for all processes
-wait $PRIMARY_PID $SECONDARY1_PID $SECONDARY2_PID
+wait $PRIMARY_PID $COMPUTE1_PID $COMPUTE2_PID
