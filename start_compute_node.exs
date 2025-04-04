@@ -1,9 +1,18 @@
 
 # Configure the application for compute-only mode
-Application.put_env(:prime_scaler, PrimeScalerWeb.Endpoint, server: false)
 Application.put_env(:prime_scaler, :distribution, enabled: true, computation_only: true)
 
-# Start required applications
+# Completely disable the web endpoint
+Application.put_env(:prime_scaler, PrimeScalerWeb.Endpoint,
+  server: false,
+  http: false,
+  enabled: false,
+  start_server: false
+)
+
+# Start only required applications
+Application.ensure_all_started(:logger)
+Application.ensure_all_started(:phoenix_pubsub)
 Application.ensure_all_started(:prime_scaler)
 
 # Connect to the primary node
