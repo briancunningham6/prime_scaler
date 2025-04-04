@@ -384,4 +384,4 @@ To build a release locally:
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License - see the LICENSE file for details XXX.
