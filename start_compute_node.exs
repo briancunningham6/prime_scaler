@@ -17,9 +17,10 @@ Application.ensure_all_started(:prime_scaler)
 
 # Try to connect to the primary node with retries
 primary_node = :"primary@192.168.64.1"
-max_retries = 10
 
 defmodule ConnectionHelper do
+  @max_retries 10
+
   def connect_with_retry(primary_node, retry_count) do
     if Node.connect(primary_node) do
       IO.puts("Successfully connected to primary node!")
@@ -30,14 +31,14 @@ defmodule ConnectionHelper do
         :timer.sleep(1000)
         connect_with_retry(primary_node, retry_count - 1)
       else
-        IO.puts("Failed to connect after #{max_retries} attempts")
+        IO.puts("Failed to connect after #{@max_retries} attempts")
         false
       end
     end
   end
 end
 
-if ConnectionHelper.connect_with_retry(primary_node, max_retries) do
+if ConnectionHelper.connect_with_retry(primary_node, ConnectionHelper.@max_retries) do
   IO.puts("Compute node started and connected to #{inspect Node.list()}")
 else
   IO.puts("Could not establish connection to primary node")
