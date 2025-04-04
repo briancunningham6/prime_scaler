@@ -1,12 +1,13 @@
-name: Elixir CI/CD Release Pipeline
+name: Elixir CI/CD Multi-Platform Release
 on:
   push:
     branches: [ prod ]
   pull_request:
     branches: [ prod ]
 jobs:
-  build:
-    name: Build and Test
+  # Standard x86_64 build for regular Linux/Windows
+  build-x86:
+    name: Build for x86_64
     runs-on: ubuntu-latest
     
     env:
@@ -21,7 +22,7 @@ jobs:
         elixir-version: '1.15.4'
         otp-version: '26.0'
     
-    - name: Restore dependencies cache
+    - name: Cache dependencies
       uses: actions/cache@v3
       with:
         path: |
@@ -31,23 +32,82 @@ jobs:
         restore-keys: ${{ runner.os }}-mix-
     
     - name: Install dependencies
-      run: mix deps.get
+      run: mix deps.get --only prod
     
     - name: Compile
       run: mix compile
       
     - name: Run tests
+      run: mix test
+      
+    - name: Install frontend dependencies
       run: |
-        MIX_ENV=test mix test
+        cd assets
+        # Use npm install instead of npm ci to handle missing package-lock.json
+        npm install
         
+    - name: Build assets
+      run: mix assets.deploy
+        
+    - name: Create release
+      run: |
+        mix phx.gen.release
+        mix release --overwrite
+        
+    - name: Package release
+      id: package
+      run: |
+        mkdir -p releases
+        VERSION=$(grep 'version:' mix.exs | sed -E 's/.*version: "([^"]+)".*/\1/')
+        RELEASE_NAME="prime_scaler-${VERSION}-linux-x86_64.zip"
+        zip -r "releases/${RELEASE_NAME}" _build/prod/rel/prime_scaler
+        echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
+        
+    - name: Upload x86_64 release
+      uses: actions/upload-artifact@v4
+      with:
+        name: release-x86_64
+        path: releases/*.zip
+        retention-days: 5
+  # Apple Silicon (M1) build
+  build-m1:
+    name: Build for Apple Silicon (M1)
+    runs-on: macos-14 # macOS with Apple Silicon
+    
+    env:
+      MIX_ENV: prod
+      
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Elixir
+      uses: erlef/setup-beam@v1
+      with:
+        elixir-version: '1.15.4'
+        otp-version: '26.0'
+    
+    - name: Cache dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          deps
+          _build
+        key: ${{ runner.os }}-arm64-mix-${{ hashFiles('**/mix.lock') }}
+        restore-keys: ${{ runner.os }}-arm64-mix-
+    
+    - name: Install dependencies
+      run: mix deps.get --only prod
+    
+    - name: Compile
+      run: mix compile
+      
     - name: Install frontend dependencies
       run: |
         cd assets
         npm install
         
     - name: Build assets
-      run: |
-        mix assets.deploy
+      run: mix assets.deploy
         
     - name: Create release
       run: |
@@ -58,38 +118,161 @@ jobs:
       run: |
         mkdir -p releases
         VERSION=$(grep 'version:' mix.exs | sed -E 's/.*version: "([^"]+)".*/\1/')
-        RELEASE_NAME="prime_scaler-${VERSION}.zip"
+        RELEASE_NAME="prime_scaler-${VERSION}-macos-arm64.zip"
         zip -r "releases/${RELEASE_NAME}" _build/prod/rel/prime_scaler
-        echo "RELEASE_NAME=${RELEASE_NAME}" >> $GITHUB_ENV
-        echo "RELEASE_VERSION=${VERSION}" >> $GITHUB_ENV
         
-    - name: Upload release artifact
+    - name: Upload M1 release
       uses: actions/upload-artifact@v4
       with:
-        name: release-build
+        name: release-m1
         path: releases/*.zip
         retention-days: 5
+  # Raspberry Pi 5 build (using Docker and QEMU for cross-compilation)
+  build-rpi5:
+    name: Build for Raspberry Pi 5
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v2
+      
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+      
+    - name: Build for Raspberry Pi 5
+      run: |
+        # Create Docker build context
+        mkdir -p docker-build
+        cp -r . docker-build/
         
-  release:
+        # Create Dockerfile for Raspberry Pi 5 build
+        cat > docker-build/Dockerfile << 'EOF'
+        FROM arm64v8/debian:bullseye
+        
+        # Install build dependencies
+        RUN apt-get update && apt-get install -y \
+            build-essential \
+            git \
+            nodejs \
+            npm \
+            wget \
+            curl \
+            unzip
+        
+        # Install Erlang repository
+        RUN apt-get update && apt-get install -y wget
+        RUN wget https://packages.erlang-solutions.com/erlang-solutions_2.0_all.deb
+        RUN dpkg -i erlang-solutions_2.0_all.deb
+        
+        # Install Erlang and Elixir
+        RUN apt-get update && apt-get install -y \
+            erlang \
+            elixir
+        
+        # Create app directory
+        WORKDIR /app
+        
+        # Copy application files
+        COPY . .
+        
+        # Get dependencies
+        RUN mix local.hex --force
+        RUN mix local.rebar --force
+        RUN mix deps.get --only prod
+        
+        # Build assets
+        RUN cd assets && npm install && cd ..
+        RUN mix assets.deploy
+        
+        # Build release
+        ENV MIX_ENV=prod
+        RUN mix release
+        EOF
+        
+        # Build the Docker image using QEMU
+        cd docker-build
+        docker buildx build --platform linux/arm64/v8 -t prime_scaler_rpi5_builder .
+        
+        # Extract the release
+        docker create --name temp_container prime_scaler_rpi5_builder
+        mkdir -p ../releases
+        docker cp temp_container:/app/_build/prod/rel/prime_scaler ../releases/prime_scaler_rpi5
+        docker rm temp_container
+        
+        # Package the release
+        VERSION=$(grep 'version:' mix.exs | sed -E 's/.*version: "([^"]+)".*/\1/')
+        cd ../releases
+        zip -r "prime_scaler-${VERSION}-raspberry-pi-5.zip" prime_scaler_rpi5
+      
+    - name: Upload Raspberry Pi 5 release
+      uses: actions/upload-artifact@v4
+      with:
+        name: release-rpi5
+        path: releases/prime_scaler-*-raspberry-pi-5.zip
+        retention-days: 5
+  # Create GitHub Release with all platform builds
+  create-release:
     name: Create GitHub Release
-    needs: build
+    needs: [build-x86, build-m1, build-rpi5]
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/prod'
     
     steps:
-    - name: Download artifact
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Get version
+      id: get_version
+      run: |
+        VERSION=$(grep 'version:' mix.exs | sed -E 's/.*version: "([^"]+)".*/\1/')
+        echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
+      
+    - name: Download x86_64 artifact
       uses: actions/download-artifact@v4
       with:
-        name: release-build
+        name: release-x86_64
         path: releases
         
+    - name: Download M1 artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: release-m1
+        path: releases
+        
+    - name: Download Raspberry Pi 5 artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: release-rpi5
+        path: releases
+        
+    - name: List files
+      run: ls -la releases
+      
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v1
-      with:
-        tag_name: release-${{ github.run_number }}
-        name: Release ${{ github.run_number }}
-        files: releases/*.zip
-        draft: false
-        prerelease: false
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ steps.get_version.outputs.VERSION }}
+        name: Release v${{ steps.get_version.outputs.VERSION }}
+        body: |
+          PrimeScaler Release v${{ steps.get_version.outputs.VERSION }}
+          
+          ## Available Builds:
+          
+          - **Linux (x86_64)**: Standard build for most PCs and servers
+          - **macOS (ARM64)**: For Apple Silicon Macs (M1, M2, etc.)
+          - **Raspberry Pi 5**: For Raspberry Pi 5 (64-bit OS)
+          
+          ## Installation Instructions:
+          
+          1. Download the appropriate zip file for your system
+          2. Unzip the file: `unzip prime_scaler-*.zip`
+          3. Run the application: `./prime_scaler/bin/prime_scaler start`
+          
+          For detailed installation and configuration instructions, see the README.
+        draft: false
+        prerelease: false
+        files: releases/*.zip
