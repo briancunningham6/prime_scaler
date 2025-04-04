@@ -4,7 +4,7 @@ defmodule PrimeScaler.Application do
 
   @impl true
   def start(_type, _args) do
-    children = [
+    base_children = [
       # Start the PubSub system first
       {Phoenix.PubSub, name: PrimeScaler.PubSub},
       
@@ -15,16 +15,12 @@ defmodule PrimeScaler.Application do
       PrimeScaler.PrimeRegistry
     ]
 
-    # Only add web-related children if not in compute-only mode
     children = if Application.get_env(:prime_scaler, :distribution)[:computation_only] do
-      # Completely disable web components for compute nodes
-      Application.put_env(:phoenix, :serve_endpoints, false)
-      Application.delete_env(:prime_scaler, PrimeScalerWeb.Endpoint)
-      children
+      base_children
     else
-      children ++ [
+      base_children ++ [
         PrimeScalerWeb.Telemetry,
-        PrimeScalerWeb.Endpoint
+        {PrimeScalerWeb.Endpoint, []}
       ]
     end
 
