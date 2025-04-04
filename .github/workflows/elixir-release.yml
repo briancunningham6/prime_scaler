@@ -1,4 +1,4 @@
-name: Elixir CI/CD Multi-Platform Release
+name: Elixir Multi-Platform Build
 on:
   push:
     branches: [ prod ]
@@ -16,11 +16,15 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     
-    - name: Set up Elixir
-      uses: erlef/setup-beam@v1
-      with:
-        elixir-version: '1.15.4'
-        otp-version: '26.0'
+    - name: Install Erlang and Elixir with Homebrew
+      run: |
+        brew update
+        brew install erlang elixir
+        
+    - name: Set up Hex and Rebar
+      run: |
+        mix local.hex --force
+        mix local.rebar --force
     
     - name: Cache dependencies
       uses: actions/cache@v3
@@ -44,11 +48,11 @@ jobs:
         
     - name: Build assets
       run: mix assets.deploy
-
+      
     - name: Generate secret key base
       run: |
         SECRET_KEY=$(mix phx.gen.secret)
-        echo "SECRET_KEY_BASE=${SECRET_KEY}" >> $GITHUB_ENV  
+        echo "SECRET_KEY_BASE=${SECRET_KEY}" >> $GITHUB_ENV
         
     - name: Create release
       run: |
@@ -82,14 +86,28 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v2
       
+    - name: Generate secret key base
+      run: |
+        # Install Elixir temporarily to generate a secret
+        sudo apt-get update
+        sudo apt-get install -y elixir
+        SECRET_KEY=$(elixir -e "IO.puts :crypto.strong_rand_bytes(64) |> Base.encode64 |> binary_part(0, 64)")
+        echo "SECRET_KEY_BASE=${SECRET_KEY}" >> $GITHUB_ENV
+      
     - name: Build for Raspberry Pi 5
       run: |
         # Create Docker build context
         mkdir -p docker-build
-        cp -r . docker-build/
+        
+        # Copy required files for build (not the entire directory)
+        cp -r assets docker-build/
+        cp -r config docker-build/
+        cp -r lib docker-build/
+        cp -r priv docker-build/
+        cp mix.exs mix.lock docker-build/
         
         # Create Dockerfile for Raspberry Pi 5 build
-        cat > docker-build/Dockerfile << 'EOF'
+        cat > docker-build/Dockerfile << EOF
         FROM arm64v8/debian:bullseye
         
         # Install build dependencies
@@ -118,6 +136,10 @@ jobs:
         # Copy application files
         COPY . .
         
+        # Set SECRET_KEY_BASE environment variable
+        ENV SECRET_KEY_BASE=${SECRET_KEY_BASE}
+        ENV MIX_ENV=prod
+        
         # Get dependencies
         RUN mix local.hex --force
         RUN mix local.rebar --force
@@ -128,7 +150,6 @@ jobs:
         RUN mix assets.deploy
         
         # Build release
-        ENV MIX_ENV=prod
         RUN mix release
         EOF
         
