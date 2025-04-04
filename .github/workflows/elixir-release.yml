@@ -156,7 +156,7 @@ jobs:
   # Create GitHub Release with all platform builds
   create-release:
     name: Create GitHub Release
-    needs: [build-x86, build-m1, build-rpi5]
+    needs: [build-m1, build-rpi5]
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/prod'
     
@@ -169,12 +169,6 @@ jobs:
       run: |
         VERSION=$(grep 'version:' mix.exs | sed -E 's/.*version: "([^"]+)".*/\1/')
         echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
-      
-    - name: Download x86_64 artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: release-x86_64
-        path: releases
         
     - name: Download M1 artifact
       uses: actions/download-artifact@v4
@@ -203,7 +197,6 @@ jobs:
           
           ## Available Builds:
           
-          - **Linux (x86_64)**: Standard build for most PCs and servers
           - **macOS (ARM64)**: For Apple Silicon Macs (M1, M2, etc.)
           - **Raspberry Pi 5**: For Raspberry Pi 5 (64-bit OS)
           
