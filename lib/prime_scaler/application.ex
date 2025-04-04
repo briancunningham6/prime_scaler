@@ -17,6 +17,9 @@ defmodule PrimeScaler.Application do
 
     # Only add web-related children if not in compute-only mode
     children = if Application.get_env(:prime_scaler, :distribution)[:computation_only] do
+      # Explicitly exclude web components for compute nodes
+      Application.put_env(:phoenix, :serve_endpoints, false)
+      Application.put_env(:prime_scaler, PrimeScalerWeb.Endpoint, server: false)
       children
     else
       children ++ [

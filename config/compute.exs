@@ -1,11 +1,15 @@
 
 import Config
 
-# Completely disable the web interface
+# Completely disable Phoenix endpoint
 config :prime_scaler, PrimeScalerWeb.Endpoint,
   server: false,
   http: false,
-  enabled: false
+  enabled: false,
+  load_from_system_env: false,
+  start_server: false,
+  code_reloader: false,
+  check_origin: false
 
 # Enable distributed computation
 config :prime_scaler, :distribution,
