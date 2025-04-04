@@ -5,73 +5,6 @@ on:
   pull_request:
     branches: [ prod ]
 jobs:
-  # Apple Silicon (M1) build
-  build-m1:
-    name: Build for Apple Silicon (M1)
-    runs-on: macos-14 # macOS with Apple Silicon
-    
-    env:
-      MIX_ENV: prod
-      
-    steps:
-    - uses: actions/checkout@v3
-    
-    - name: Install Erlang and Elixir with Homebrew
-      run: |
-        brew update
-        brew install erlang elixir
-        
-    - name: Set up Hex and Rebar
-      run: |
-        mix local.hex --force
-        mix local.rebar --force
-    
-    - name: Cache dependencies
-      uses: actions/cache@v3
-      with:
-        path: |
-          deps
-          _build
-        key: ${{ runner.os }}-arm64-mix-${{ hashFiles('**/mix.lock') }}
-        restore-keys: ${{ runner.os }}-arm64-mix-
-    
-    - name: Install dependencies
-      run: mix deps.get --only prod
-    
-    - name: Compile
-      run: mix compile
-      
-    - name: Install frontend dependencies
-      run: |
-        cd assets
-        npm install
-        
-    - name: Build assets
-      run: mix assets.deploy
-      
-    - name: Generate secret key base
-      run: |
-        SECRET_KEY=$(mix phx.gen.secret)
-        echo "SECRET_KEY_BASE=${SECRET_KEY}" >> $GITHUB_ENV
-        
-    - name: Create release
-      run: |
-        mix phx.gen.release
-        mix release --overwrite
-        
-    - name: Package release
-      run: |
-        mkdir -p releases
-        VERSION=$(grep 'version:' mix.exs | sed -E 's/.*version: "([^"]+)".*/\1/')
-        RELEASE_NAME="prime_scaler-${VERSION}-macos-arm64.zip"
-        zip -r "releases/${RELEASE_NAME}" _build/prod/rel/prime_scaler
-        
-    - name: Upload M1 release
-      uses: actions/upload-artifact@v4
-      with:
-        name: release-m1
-        path: releases/*.zip
-        retention-days: 5
   # Raspberry Pi 5 build (using Docker and QEMU for cross-compilation)
   build-rpi5:
     name: Build for Raspberry Pi 5
@@ -177,7 +110,7 @@ jobs:
   # Create GitHub Release with all platform builds
   create-release:
     name: Create GitHub Release
-    needs: [build-m1, build-rpi5]
+    needs: [build-rpi5]
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/prod'
     
@@ -190,12 +123,6 @@ jobs:
       run: |
         VERSION=$(grep 'version:' mix.exs | sed -E 's/.*version: "([^"]+)".*/\1/')
         echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
-        
-    - name: Download M1 artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: release-m1
-        path: releases
         
     - name: Download Raspberry Pi 5 artifact
       uses: actions/download-artifact@v4
